@@ -39,6 +39,7 @@ round 466×466 layout. **Hardware** is swapped at compile time: one folder under
 | Board HAL | `board.cpp`, `hw/board.h` | Wire, panel canvas, touch IRQ wiring. Calls into `boards/<id>/`. |
 | Board profile | `boards/<dir>/{pins,audio,display,touch,power,expander_impl}.h` | The only place a new panel, codec, or PMU is allowed. |
 | PIO board JSON | `boards/<dir>/board.json` | Flash/PSRAM/USB for PlatformIO. Not the game HAL. |
+| Host tests | `test/` | `make test` (Python). `make test-native` (g++ + `test/test_host/`). |
 
 ## Screen size
 
@@ -84,4 +85,4 @@ GPIO, I2C addresses, panel class (`CO5300` vs `ST77916`), touch class
 (`CST9217` vs `CST816`), codec register pokes, PA policy, and how brightness
 is driven (AMOLED command vs LEDC PWM). Those belong in `boards/<id>/`.
 
-How to add a device: [boards.md](boards.md).
+How to add a device: [boards.md](boards.md). Host tests: `make test` (Unity in `test/`).

@@ -331,6 +331,7 @@ beach, forest, volcano, mountain, snow). Sleeping forces night.
 - `pin_config.h` — includes `boards/<TAMAPOKE_BOARD_DIR>/` (`pins`, `audio`, `display`, `touch`, `power`, `expander_impl`)
 - `boards/` — per-device HAL + PlatformIO JSON; see [docs/boards.md](docs/boards.md)
 - `docs/` — [architecture](docs/architecture.md) and [adding a board](docs/boards.md)
+- `test/` — host checks (`make test`, `make test-native`); does not flash the board
 - `tools/` — pipeline: `dex_data.py` (data), `dex_stats.py`, `dex_names.py` +
   `gen_names.py` (localized names), `gen_dex.py`,
   `sprites.py` (workshop), `pack_pmd.py` / `make_thumbs.py`

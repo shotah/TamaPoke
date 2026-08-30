@@ -44,42 +44,44 @@ endif
 
 .DEFAULT_GOAL := help
 
-.PHONY: help deps build upload flash monitor \
+.PHONY: help deps build upload flash monitor test test-native \
         sprites thumbs bundle web \
         sd-copy sd-send sd-ls \
         clean clean-sprites
 
 help: ## Show this help
-	@echo Firmware:
-	@echo   deps               Create .venv and pip install -r requirements.txt
-	@echo   build              Compile with PlatformIO \(BOARD=$(BOARD)\)
-	@echo   upload             Flash the board on $(PORT)
-	@echo   flash              build + upload
-	@echo   monitor            Serial monitor \(115200, Ctrl-C to quit\)
-	@echo   BOARD=<folder>     boards/ folder + PIO env \(aliases: 175, 185c\)
-	@echo
-	@echo Sprites \(~40 MB, PMD SpriteCollab, needs network\):
-	@echo   sprites            Pack all 151 + shinies + thumbs
-	@echo   thumbs             Rebuild thumbs.bin from already-packed mons
-	@echo   bundle             Pack web/sprites.pak for the browser installer
-	@echo
-	@echo microSD \(FAT32, files go in /mons on the card\):
-	@echo   sd-copy SD=...     Copy packed bins onto a mounted card
-	@echo   sd-send            Push sprites to the board over USB \(needs running fw\)
-	@echo   sd-ls              List what the board already has on its SD
-	@echo
-	@echo Other:
-	@echo   web                Rebuild firmware bin + sprites.pak \(Arduino CLI path\)
-	@echo   clean              Wipe .pio build cache
-	@echo   clean-sprites      Delete packed bins \(not the download cache\)
-	@echo
-	@echo Format a blank card FAT32 \(pick the partition, not the whole disk\):
-	@echo   lsblk
-	@echo   sudo mkfs.vfat -F 32 -n TAMAPOKE /dev/sdX1
-	@echo   make sprites
-	@echo   make sd-copy SD=/run/media/deck/TAMAPOKE
-	@echo
-	@echo Variables: PORT=$(PORT)  BOARD=$(BOARD)  SD=$(SD)  PYTHON=$(PYTHON)
+	@echo "Firmware:"
+	@echo "  deps               Create .venv and pip install -r requirements.txt"
+	@echo "  build              Compile with PlatformIO (BOARD=$(BOARD))"
+	@echo "  upload             Flash the board on $(PORT)"
+	@echo "  flash              build + upload"
+	@echo "  monitor            Serial monitor (115200, Ctrl-C to quit)"
+	@echo "  BOARD=<folder>     boards/ folder + PIO env (aliases: 175, 185c)"
+	@echo "  test               Host checks (Python)"
+	@echo "  test-native        Host C++ tests (g++, no board)"
+	@echo ""
+	@echo "Sprites (~40 MB, PMD SpriteCollab, needs network):"
+	@echo "  sprites            Pack all 151 + shinies + thumbs"
+	@echo "  thumbs             Rebuild thumbs.bin from already-packed mons"
+	@echo "  bundle             Pack web/sprites.pak for the browser installer"
+	@echo ""
+	@echo "microSD (FAT32, files go in /mons on the card):"
+	@echo "  sd-copy SD=...     Copy packed bins onto a mounted card"
+	@echo "  sd-send            Push sprites to the board over USB (needs running fw)"
+	@echo "  sd-ls              List what the board already has on its SD"
+	@echo ""
+	@echo "Other:"
+	@echo "  web                Rebuild firmware bin + sprites.pak (Arduino CLI path)"
+	@echo "  clean              Wipe .pio build cache"
+	@echo "  clean-sprites      Delete packed bins (not the download cache)"
+	@echo ""
+	@echo "Format a blank card FAT32 (pick the partition, not the whole disk):"
+	@echo "  lsblk"
+	@echo "  sudo mkfs.vfat -F 32 -n TAMAPOKE /dev/sdX1"
+	@echo "  make sprites"
+	@echo "  make sd-copy SD=/run/media/deck/TAMAPOKE"
+	@echo ""
+	@echo "Variables: PORT=$(PORT)  BOARD=$(BOARD)  SD=$(SD)  PYTHON=$(PYTHON)"
 
 # ---- setup --------------------------------------------------------
 
@@ -93,6 +95,14 @@ deps: $(VENV)/bin/python ## Create .venv and install requirements.txt
 
 build: ## Compile firmware
 	$(PIO) run -e $(ENV)
+
+test: ## Host checks \(no board\)
+	$(PYTHON) test/check_invariants.py
+
+test-native: ## Host C++ tests via g++ \(does not need libc headers\)
+	mkdir -p .pio
+	g++ -std=c++20 -Itest/support -I. test/test_host/test_host.cpp -o .pio/test_host
+	.pio/test_host
 
 upload: ## Flash firmware to $(PORT)
 	$(PIO) run -e $(ENV) -t upload --upload-port $(PORT)
