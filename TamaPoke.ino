@@ -25,6 +25,7 @@
 // PlatformIO's .ino converter misses these (Arduino IDE auto-prototypes them).
 const char *eggMsg();
 const char *statusMsg();
+void drawSnore();
 void touchIsr();
 
 // Firmware version. Bump this on each release (and manifest.json for the
@@ -860,12 +861,7 @@ void render() {
     else if (pet.wantFarewellButton()) drawFarewellButton();  // gold CTA: farewell
   }
 
-  if (pet.sleeping) {
-    gfx->setTextColor(UI_INK_NIGHT);
-    gfx->setTextSize(2);
-    gfx->setCursor(SX(300), SY(130));
-    gfx->print("Zz");
-  }
+  drawSnore();
 
   // food picker
   if (feedMenuUntil) {
@@ -2115,6 +2111,23 @@ void drawPetPMD() {
   drawPmdAct(act, (int)beh.x, PET_GROUND, now - beh.t0, loop || act == PMD_IDLE, false, PET_SCALE);
 
   if (pet.showHeart()) drawMap(SPR_HEART, 32, (int)beh.x + 50, PET_GROUND - 190, 2, false);
+}
+
+// SpriteCollab Sleep/EventSleep have no Z bubbles — just a 2-frame breathe.
+// Float a few Z's off the pet so sleep reads as snoring.
+void drawSnore() {
+  if (!pet.sleeping || pet.isEgg()) return;
+  uint32_t now = millis();
+  int petX = pmd.loaded ? (int)beh.x : CX;
+  int headY = pmd.loaded ? (PET_GROUND - SY(108)) : (PET_CY - SY(52));
+  gfx->setTextColor(inkColor());
+  gfx->setTextSize(2);
+  static const char *const zs[] = { "Z", "Zz", "Zzz" };
+  for (int i = 0; i < 2; i++) {
+    uint32_t t = (now + (uint32_t)i * 700) % 1400;
+    gfx->setCursor(petX + SX(20) + i * SX(10), headY - (int)(t * SY(56) / 1400));
+    gfx->print(zs[t / 467]);
+  }
 }
 
 // animated sprite from SD: integer zoom per pixel, frames at their own pace
