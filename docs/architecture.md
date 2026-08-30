@@ -85,4 +85,4 @@ GPIO, I2C addresses, panel class (`CO5300` vs `ST77916`), touch class
 (`CST9217` vs `CST816`), codec register pokes, PA policy, and how brightness
 is driven (AMOLED command vs LEDC PWM). Those belong in `boards/<id>/`.
 
-How to add a device: [boards.md](boards.md). Host tests: `make test` (Unity in `test/`).
+How to add a device: [boards.md](boards.md). Host tests: `make test` / `make test-native`.
