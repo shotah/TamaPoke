@@ -8,10 +8,22 @@
 ![Languages](https://img.shields.io/badge/languages-6-FFCB05)
 [![Stars](https://img.shields.io/github/stars/socquique/TamaPoke?style=flat&logo=github&color=yellow)](https://github.com/socquique/TamaPoke/stargazers)
 
-A gen-1-Pokémon-inspired tamagotchi for the
-**Waveshare ESP32-S3-Touch-AMOLED-1.75** (round 466×466 AMOLED, CO5300 driver
-over QSPI, CST9217 touch over I2C). Raise any of the 151, evolve it, train it
-and complete them all (shinies included).
+A gen-1-Pokémon-inspired tamagotchi for round Waveshare ESP32-S3 boards.
+The original target is the **ESP32-S3-Touch-AMOLED-1.75** (466×466 CO5300,
+CST9217). A second HAL builds for the **ESP32-S3-Touch-LCD-1.85C V2**
+(360×360 ST77916, CST816). Layout is drawn at 466 and scaled with `SX`/`SY`.
+Raise any of the 151, evolve it, train it and complete them all (shinies included).
+
+### Supported boards
+
+| Board | Select | Notes |
+|---|---|---|
+| Waveshare ESP32-S3-Touch-AMOLED-1.75 | Arduino IDE (default), `make BOARD=amoled_175`, PIO `amoled_175` | AXP2101, PWR button, 466×466 |
+| Waveshare ESP32-S3-Touch-LCD-1.85C **V2** | `make BOARD=lcd_185c`, PIO `lcd_185c`, or `-DTAMAPOKE_BOARD_DIR=lcd_185c` | TCA9554 + PWM backlight, 360×360. **Not V1** (PCM5101). |
+
+Do not flash a 1.85C image on a 1.75, or the reverse. The chips and pins differ.
+
+How the firmware is split and how to add another panel: **[docs/architecture.md](docs/architecture.md)** · **[docs/boards.md](docs/boards.md)**.
 
 > **Personal, non-commercial fan project.** Code is MIT; the sprites are from
 > PMD SpriteCollab (CC BY-NC, Pokémon © Nintendo/Game Freak), and the 3D case is
@@ -315,7 +327,10 @@ beach, forest, volcano, mountain, snow). Sleeping forces night.
 - `i18n.h` / `i18n.cpp` — the 6-language string tables
 - `dex.h` — GENERATED (`gen_dex.py`): the 151 table
 - `species.h` — GENERATED (`sprites.py`): fallback sprites, UI icons, colours
-- `pin_config.h` — the board's official pins
+- `hw/board.h` / `board.cpp` — I2C, QSPI canvas, touch IRQ wiring
+- `pin_config.h` — includes `boards/<TAMAPOKE_BOARD_DIR>/` (`pins`, `audio`, `display`, `touch`, `power`, `expander_impl`)
+- `boards/` — per-device HAL + PlatformIO JSON; see [docs/boards.md](docs/boards.md)
+- `docs/` — [architecture](docs/architecture.md) and [adding a board](docs/boards.md)
 - `tools/` — pipeline: `dex_data.py` (data), `dex_stats.py`, `dex_names.py` +
   `gen_names.py` (localized names), `gen_dex.py`,
   `sprites.py` (workshop), `pack_pmd.py` / `make_thumbs.py`

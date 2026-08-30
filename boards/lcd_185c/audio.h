@@ -1,0 +1,43 @@
+#pragma once
+#include <Arduino.h>
+#include <Wire.h>
+
+// 1.85C V2 ES8311: MCLK from GPIO2, 24 kHz 16-bit mono
+// (Waveshare 03_audio_out_no_tf). PA stays on.
+
+#define AUDIO_SAMPLE_RATE 24000
+#define AUDIO_STEREO 0
+#define AUDIO_PA_HOLD 1
+
+static bool es8311BoardInit(bool (*esW)(uint8_t, uint8_t), uint8_t (*esR)(uint8_t)) {
+  esW(0x00, 0x1F);
+  delay(20);
+  esW(0x00, 0x00);
+  esW(0x00, 0x80);
+
+  esW(0x01, 0x3F);
+  { uint8_t r = esR(0x06); r &= ~0x20; esW(0x06, r); }
+
+  { uint8_t r = esR(0x02); r &= 0x07; r |= (0 << 5) | (1 << 3); esW(0x02, r); }
+  esW(0x03, 0x0A);
+  esW(0x04, 0x0A);
+  esW(0x05, 0x00);
+  { uint8_t r = esR(0x06); r &= 0xE0; r |= 0x03; esW(0x06, r); }
+  { uint8_t r = esR(0x07); r &= 0xC0; esW(0x07, r); }
+  esW(0x08, 0xFF);
+
+  { uint8_t r = esR(0x00); r &= 0xBF; esW(0x00, r); }
+  esW(0x09, 0x0C);
+  esW(0x0A, 0x0C);
+
+  esW(0x0D, 0x01);
+  esW(0x0E, 0x02);
+  esW(0x12, 0x00);
+  esW(0x13, 0x10);
+  esW(0x1C, 0x6A);
+  esW(0x37, 0x08);
+
+  esW(0x32, 0xB3);
+  { uint8_t r = esR(0x31); r &= 0x9F; esW(0x31, r); }
+  return true;
+}

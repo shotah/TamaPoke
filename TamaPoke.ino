@@ -1,18 +1,19 @@
 // TamaPoke - gen-1 inspired pixel-art tamagotchi
-// for Waveshare ESP32-S3-Touch-LCD-1.85C V2 (360x360 ST77916)
+// Default board: Waveshare ESP32-S3-Touch-AMOLED-1.75 (466x466).
+// Also builds for ESP32-S3-Touch-LCD-1.85C V2 (360x360) via
+// -DTAMAPOKE_BOARD_DIR=lcd_185c. See docs/boards.md.
 //
 // Libraries:
-//   - "GFX Library for Arduino" (moononournation), ST77916 QSPI
-//   - "SensorLib" (Lewis He), CST816 touch + PCF85063 RTC
+//   - "GFX Library for Arduino" (moononournation)
+//   - "SensorLib" (Lewis He)
+//   - 1.75 only: XPowersLib (AXP2101)
 //
 // Board: ESP32S3 Dev Module | Flash 16MB | PSRAM: OPI PSRAM | USB CDC On Boot: Enabled
 
 #include <Arduino.h>
 #include <Wire.h>
-#include "Arduino_GFX_Library.h"
-#include "TouchDrvCSTXXX.hpp"
 #include "pin_config.h"
-#include "expander.h"
+#include "hw/board.h"
 #include "species.h"
 #include "dex.h"
 #include "pet.h"
@@ -30,17 +31,6 @@ void touchIsr();
 // web installer). Shown on the settings screen and over serial at boot.
 #define FW_VERSION "1.5"
 
-Arduino_DataBus *bus = new Arduino_ESP32QSPI(
-  LCD_CS, LCD_SCLK, LCD_SDIO0, LCD_SDIO1, LCD_SDIO2, LCD_SDIO3);
-// st77916_150 is the F0=0x28 family Waveshare uses on 2025+ 1.85C panels.
-// Default Arduino_ST77916 init is the older F0=0x08 sequence and stays black.
-Arduino_ST77916 *panel = new Arduino_ST77916(
-  bus, GFX_NOT_DEFINED, 0, true, LCD_WIDTH, LCD_HEIGHT,
-  0, 0, 0, 0,
-  st77916_150_init_operations, sizeof(st77916_150_init_operations));
-Arduino_Canvas *gfx = new Arduino_Canvas(LCD_WIDTH, LCD_HEIGHT, panel);
-
-TouchDrvCST816 touch;
 Pet pet;
 
 // animated SD sprite for the current species (if the file exists)
@@ -108,7 +98,6 @@ int flashIdxForDex(int16_t dex) {
 #define CX (LCD_WIDTH / 2)
 #define CY (LCD_HEIGHT / 2)
 #define PET_CY SY(202)
-#define PET_SCALE 4
 
 // Default GFX font is 6x8 at size 1. Centered; y is already in screen space.
 static void printCx(uint8_t size, int y, const char *s) {
@@ -180,38 +169,9 @@ void setup() {
   // monitor is open on the host (the USB CDC TX buffer fills up
   // and nobody drains it) -> with timeout 0 messages are dropped
   Serial.setTxTimeoutMs(0);
-  Serial.printf("TamaPoke fw v%s (1.85C V2)\n", FW_VERSION);
+  Serial.printf("TamaPoke fw v%s (%s)\n", FW_VERSION, boardName());
   loadLang();
-  Wire.begin(IIC_SDA, IIC_SCL);
-  Wire.setClock(400000);
-  Wire.setTimeOut(50);
-
-  if (!expanderBegin()) Serial.println("expander init failed");
-  expanderPulseLcdReset();
-  expanderPulseTouchReset();
-
-  Serial.print("I2C:");
-  for (uint8_t a = 1; a < 127; a++) {
-    Wire.beginTransmission(a);
-    if (Wire.endTransmission() == 0) Serial.printf(" 0x%02x", a);
-  }
-  Serial.println();
-
-  if (!gfx->begin(80000000)) Serial.println("gfx->begin() failed");
-  setBacklight(180);
-
-  touch.setPins(-1, TP_INT);
-  bool touchOk = false;
-  for (int i = 0; i < 3 && !touchOk; i++) {
-    touchOk = touch.begin(Wire, TP_ADDR, -1, -1);
-    if (!touchOk) delay(150);
-  }
-  if (!touchOk) Serial.println("CST816 not detected");
-  else {
-    touch.disableAutoSleep();
-    touch.setMaxCoordinates(LCD_WIDTH, LCD_HEIGHT);
-  }
-  pinMode(TP_INT, INPUT_PULLUP);
+  boardBegin();
   attachInterrupt(digitalPinToInterrupt(TP_INT), touchIsr, FALLING);
 
   pet.begin();
@@ -333,7 +293,7 @@ void updateBrightness(uint32_t now) {
   static uint8_t current = 255;
   if (target != current) {
     current = target;
-    setBacklight(target);
+    boardSetBrightness(target);
   }
 }
 
@@ -461,7 +421,7 @@ void handleTouch() {
   if (!gTouchIrq && !wasPressed) return;
   gTouchIrq = false;
   int16_t x, y;
-  bool pressed = touch.getPoint(&x, &y, 1) > 0;
+  bool pressed = boardTouchGet(&x, &y);
 
   // punching bag: each tap counts immediately (rapid pounding)
   if (sackOpen) {

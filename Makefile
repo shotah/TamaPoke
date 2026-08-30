@@ -1,7 +1,10 @@
 # ---------------------------------------------------------------
 # Makefile — TamaPoke
 #
-# Waveshare ESP32-S3-Touch-LCD-1.85C V2
+# BOARD is the folder under boards/ and the PIO env of the same name:
+#   make BOARD=amoled_175 ...   Waveshare ESP32-S3-Touch-AMOLED-1.75
+#   make BOARD=lcd_185c ...     Waveshare ESP32-S3-Touch-LCD-1.85C V2
+# Short aliases: BOARD=175 and BOARD=185c. Default here is lcd_185c.
 #
 # First time:
 #   make deps          # .venv + pip install -r requirements.txt
@@ -26,8 +29,18 @@ VENV   := .venv
 PY     := $(VENV)/bin/python
 PIO    ?= pio
 PORT   ?= /dev/ttyACM0
+BOARD  ?= lcd_185c
 SD     ?=
 MONS   := tools/sdcard/mons
+
+# Folder name = PIO env. Only 175 / 185c are aliases; anything else is the folder.
+ifeq ($(BOARD),175)
+ENV := amoled_175
+else ifeq ($(BOARD),185c)
+ENV := lcd_185c
+else
+ENV := $(BOARD)
+endif
 
 .DEFAULT_GOAL := help
 
@@ -39,10 +52,11 @@ MONS   := tools/sdcard/mons
 help: ## Show this help
 	@echo Firmware:
 	@echo   deps               Create .venv and pip install -r requirements.txt
-	@echo   build              Compile with PlatformIO
+	@echo   build              Compile with PlatformIO \(BOARD=$(BOARD)\)
 	@echo   upload             Flash the board on $(PORT)
 	@echo   flash              build + upload
 	@echo   monitor            Serial monitor \(115200, Ctrl-C to quit\)
+	@echo   BOARD=<folder>     boards/ folder + PIO env \(aliases: 175, 185c\)
 	@echo
 	@echo Sprites \(~40 MB, PMD SpriteCollab, needs network\):
 	@echo   sprites            Pack all 151 + shinies + thumbs
@@ -65,7 +79,7 @@ help: ## Show this help
 	@echo   make sprites
 	@echo   make sd-copy SD=/run/media/deck/TAMAPOKE
 	@echo
-	@echo Variables: PORT=$(PORT)  SD=$(SD)  PYTHON=$(PYTHON)
+	@echo Variables: PORT=$(PORT)  BOARD=$(BOARD)  SD=$(SD)  PYTHON=$(PYTHON)
 
 # ---- setup --------------------------------------------------------
 
@@ -78,15 +92,15 @@ deps: $(VENV)/bin/python ## Create .venv and install requirements.txt
 # ---- firmware -----------------------------------------------------
 
 build: ## Compile firmware
-	$(PIO) run
+	$(PIO) run -e $(ENV)
 
 upload: ## Flash firmware to $(PORT)
-	$(PIO) run -t upload --upload-port $(PORT)
+	$(PIO) run -e $(ENV) -t upload --upload-port $(PORT)
 
 # If upload dies with "Protocol error" on RTS: unplug, hold BOOT, plug in, retry.
 upload-boot: ## Same as upload; print the BOOT-button hint first
 	@echo Hold BOOT, plug USB in, then flashing $(PORT)...
-	$(PIO) run -t upload --upload-port $(PORT)
+	$(PIO) run -e $(ENV) -t upload --upload-port $(PORT)
 
 flash: build upload ## Compile and flash
 
@@ -132,7 +146,7 @@ sd-ls: $(VENV)/bin/python ## List files on the board SD
 # ---- clean --------------------------------------------------------
 
 clean: ## Wipe PlatformIO build cache
-	$(PIO) run -t clean
+	$(PIO) run -e $(ENV) -t clean
 
 clean-sprites: ## Delete packed bins \(keeps tools/pmd_cache\)
 	rm -f $(MONS)/*.bin
