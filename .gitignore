@@ -1,5 +1,7 @@
 # artefactos de compilacion
 build/
+.pio/
+.venv/
 
 # cacheas y artefactos regenerables del taller
 tools/downloads/

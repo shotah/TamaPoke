@@ -1,4 +1,4 @@
-# GENERADO desde PokeAPI (pokemon_stats.csv): num -> (hp, atk, def, vel)
+# GENERATED from PokeAPI (pokemon_stats.csv): num -> (hp, atk, def, spe)
 BASE_STATS = {
     1: (45, 49, 49, 45),
     2: (60, 62, 63, 60),
