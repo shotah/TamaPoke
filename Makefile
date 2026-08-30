@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------
 # Makefile — TamaPoke
 #
-# Waveshare ESP32-S3-Touch-AMOLED-1.75
+# Waveshare ESP32-S3-Touch-LCD-1.85C V2
 #
 # First time:
 #   make deps          # .venv + pip install -r requirements.txt

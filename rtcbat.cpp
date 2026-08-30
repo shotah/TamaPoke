@@ -1,17 +1,15 @@
 #include "rtcbat.h"
-#include "pin_config.h"  // define XPOWERS_CHIP_AXP2101
+#include "pin_config.h"
 #include <Wire.h>
 #include <time.h>
 #include <SensorPCF85063.hpp>
-#include <XPowersLib.h>
 
 static SensorPCF85063 rtc;
-static XPowersPMU pmu;
 static bool rtcOk = false;
-static bool pmuOk = false;
+static bool batOk = false;
 
 bool rtcBegin() {
-  rtcOk = rtc.begin(Wire, IIC_SDA, IIC_SCL);
+  rtcOk = rtc.begin(Wire, -1, -1);
   if (!rtcOk) Serial.println("PCF85063 not detected");
   return rtcOk;
 }
@@ -19,7 +17,7 @@ bool rtcBegin() {
 uint32_t rtcEpoch() {
   if (!rtcOk) return 0;
   RTC_DateTime t = rtc.getDateTime();
-  if (t.getYear() < 2025 || t.getYear() > 2120) return 0;  // no valid time
+  if (t.getYear() < 2025 || t.getYear() > 2120) return 0;
   struct tm tmv = {};
   tmv.tm_year = t.getYear() - 1900;
   tmv.tm_mon = t.getMonth() - 1;
@@ -27,7 +25,7 @@ uint32_t rtcEpoch() {
   tmv.tm_hour = t.getHour();
   tmv.tm_min = t.getMinute();
   tmv.tm_sec = t.getSecond();
-  time_t e = mktime(&tmv);  // default TZ = UTC, consistent with gmtime_r
+  time_t e = mktime(&tmv);
   return e > 0 ? (uint32_t)e : 0;
 }
 
@@ -41,26 +39,16 @@ void rtcSetEpoch(uint32_t e) {
 }
 
 bool batBegin() {
-  pmuOk = pmu.begin(Wire, AXP2101_SLAVE_ADDRESS, IIC_SDA, IIC_SCL);
-  if (!pmuOk) Serial.println("AXP2101 not detected");
-  return pmuOk;
+  analogReadResolution(12);
+  pinMode(BAT_ADC, INPUT);
+  int mv = analogReadMilliVolts(BAT_ADC) * 3;
+  batOk = mv > 2000;
+  if (!batOk) Serial.println("Battery ADC quiet (USB-only is fine)");
+  return batOk;
 }
 
-// Enable AMOLED panel power. On the Waveshare 1.75 the panel (OLED VDD) hangs
-// off the AXP2101 BLDO1 rail at 3.3V. Firmware used to assume it was already
-// on; if the PMU resets (full drain), BLDO1 stays OFF and the screen is black
-// even though everything else works. Call this BEFORE gfx->begin().
-void pmuEnablePanel() {
-  if (!pmu.begin(Wire, AXP2101_SLAVE_ADDRESS, IIC_SDA, IIC_SCL)) {
-    Serial.println("AXP2101 not detected (pmuEnablePanel)");
-    return;
-  }
-  pmu.setBLDO1Voltage(3300);   // OLED VDD
-  pmu.enableBLDO1();
-}
+void pmuEnablePanel() {}
 
-// power state (I2C) is cached ~2 s: reading it every loop frame added useless
-// I2C traffic and could oscillate (brightness flicker)
 static uint32_t powerCacheT = 0;
 static int cachedPct = -1;
 static bool cachedCharging = false, cachedUsb = true;
@@ -69,28 +57,24 @@ static void refreshPower() {
   uint32_t now = millis();
   if (powerCacheT && now - powerCacheT < 2000) return;
   powerCacheT = now ? now : 1;
-  if (!pmuOk) { cachedPct = -1; cachedCharging = false; cachedUsb = true; return; }
-  cachedPct = pmu.isBatteryConnect() ? pmu.getBatteryPercent() : -1;
-  cachedCharging = pmu.isCharging();
-  cachedUsb = pmu.isVbusIn();
+  int mv = analogReadMilliVolts(BAT_ADC) * 3;
+  if (mv < 2500) {
+    cachedPct = -1;
+    cachedCharging = false;
+    cachedUsb = true;
+    return;
+  }
+  int pct = (mv - 3300) * 100 / (4200 - 3300);
+  if (pct < 0) pct = 0;
+  if (pct > 100) pct = 100;
+  cachedPct = pct;
+  cachedCharging = mv > 4100;
+  cachedUsb = true;
 }
 
 int batPercent() { refreshPower(); return cachedPct; }
 bool batCharging() { refreshPower(); return cachedCharging; }
 bool usbPresent() { refreshPower(); return cachedUsb; }
 
-void pwrSetup() {
-  if (!pmuOk) return;
-  pmu.setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
-  pmu.disableIRQ(XPOWERS_AXP2101_ALL_IRQ);
-  pmu.enableIRQ(XPOWERS_AXP2101_PKEY_SHORT_IRQ);
-  pmu.clearIrqStatus();
-}
-
-bool pwrShortPressed() {
-  if (!pmuOk) return false;
-  pmu.getIrqStatus();
-  bool hit = pmu.isPekeyShortPressIrq();
-  if (hit) pmu.clearIrqStatus();
-  return hit;
-}
+void pwrSetup() {}
+bool pwrShortPressed() { return false; }
