@@ -14,6 +14,13 @@ def fail(msg: str) -> None:
     sys.exit(1)
 
 
+def firmware_src() -> str:
+    parts = [p.read_text() for p in sorted(ROOT.glob("*.ino"))]
+    parts += [p.read_text() for p in sorted(ROOT.glob("*.cpp")) if p.parent == ROOT]
+    parts += [p.read_text() for p in sorted(ROOT.glob("*.h")) if p.parent == ROOT]
+    return "\n".join(parts)
+
+
 def test_dex() -> None:
     text = (ROOT / "dex.h").read_text()
     m = re.search(r"#define DEX_COUNT (\d+)", text)
@@ -129,10 +136,10 @@ def test_sleep_sick() -> None:
         fail(f"SLEEP_ENERGY {energy} is slower than the old +6")
     if not (floor < sick):
         fail(f"SLEEP_HYG_FLOOR {floor} must be below SICK_HYG {sick}")
-    ino = (ROOT / "TamaPoke.ino").read_text()
-    if "giveMedicine" not in ino or "SPR_ICON_MED" not in ino:
+    src = firmware_src()
+    if "giveMedicine" not in src or "SPR_ICON_MED" not in src:
         fail("food tray should offer medicine")
-    if "pet.dbgSick" not in ino:
+    if "pet.dbgSick" not in src:
         fail("serial SICK helper missing")
     if "SPR_ICON_MED" not in (ROOT / "species.h").read_text():
         fail("SPR_ICON_MED missing from species.h")
@@ -140,10 +147,10 @@ def test_sleep_sick() -> None:
 
 
 def test_walk_gaps() -> None:
-    ino = (ROOT / "TamaPoke.ino").read_text()
+    src = firmware_src()
 
     def sy_or_sx(name: str) -> int:
-        m = re.search(rf"#define {name} S[XY]\((\d+)\)", ino)
+        m = re.search(rf"#define {name} S[XY]\((\d+)\)", src)
         if not m:
             fail(f"{name} missing")
         return int(m.group(1))
@@ -158,7 +165,7 @@ def test_walk_gaps() -> None:
         fail(f"WALK_GAP_SINGLE {single} is still a one-jump trap")
     if double > 20:
         fail(f"WALK_GAP_DOUBLE {double} is too wide for _XX_")
-    if "walkNextPair" not in ino:
+    if "walkNextPair" not in src:
         fail("walk doubles need walkNextPair")
     alt = sy_or_sx("WALK_BIRD_ALT")
     mid = sy_or_sx("WALK_BIRD_ALT_MID")
@@ -168,7 +175,7 @@ def test_walk_gaps() -> None:
         fail(f"bird alt {alt} must sit above standing body {body}")
     if not (alt < mid < hi):
         fail(f"bird lanes {alt} < {mid} < {hi}")
-    if "WALK_BIRD_AFTER" not in ino:
+    if "WALK_BIRD_AFTER" not in src:
         fail("birds should wait for a score gate")
     print("ok  walk gaps")
 
