@@ -1,7 +1,7 @@
 #include "minitest.h"
-#include "dex.h"
-#include "pet.h"
-#include "i18n.h"
+#include "game/dex.h"
+#include "game/pet.h"
+#include "game/i18n.h"
 #include "boards/lcd_185c/pins.h"
 
 // pin_config.h cannot be included here: it pulls the panel/touch HAL.

@@ -1,5 +1,5 @@
-#include "ui.h"
-#include "dex.h"
+#include "ui/ui.h"
+#include "game/dex.h"
 
 #define HORIZON SY(232)
 

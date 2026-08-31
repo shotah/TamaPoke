@@ -1,7 +1,7 @@
-#include "ui.h"
-#include "dex.h"
-#include "i18n.h"
-#include "audio.h"
+#include "ui/ui.h"
+#include "game/dex.h"
+#include "game/i18n.h"
+#include "svc/audio.h"
 
 PmdMon galleryPmd;  // large sprite for gallery detail view (PMD/TPK2, legal)
 
@@ -40,7 +40,7 @@ void renderGallery() {
     char head[24];
     snprintf(head, sizeof(head), "N.%03d %s%s", galleryDetail,
              pet.isShinyRegistered(galleryDetail) ? "*" : "", reg ? dexName(galleryDetail) : "???");
-    gfx->setTextColor(reg ? d.accent : UI_INK);
+    uiColor(reg ? d.accent : UI_INK);
     printCx(2, SY(44), head);
     if (galleryPmd.loaded) {
       // animated and in color if registered; static silhouette if not ("?" style)
@@ -49,11 +49,10 @@ void renderGallery() {
       const uint8_t *t = thumbs.get(galleryDetail);
       if (t) drawThumb(t, CX - GAL_CELL, SY(120), 3, !reg);
     }
-    gfx->setTextColor(UI_INK);
+    uiColor(UI_INK);
     gfx->setTextSize(2);
     if (!reg) printCx(2, SY(372), T(S_DEX_HINT));
-    gfx->setCursor(CX - strlen(T(S_DETAIL_BACK)) * 6, SY(408));
-    gfx->print(T(S_DETAIL_BACK));
+    printAt(2, CX - textWidth(2, T(S_DETAIL_BACK)) / 2, SY(408), T(S_DETAIL_BACK));
     gfx->flush();
     return;
   }
@@ -65,7 +64,7 @@ void renderGallery() {
   gfx->fillCircle(CX, CY, CX - 2, UI_BG_DAY);
   char head[24];
   snprintf(head, sizeof(head), T(S_POKEDEX_FMT), pet.registeredCount());
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, SY(32), head);
 
   for (int r = 0; r < 4; r++) {
@@ -77,7 +76,7 @@ void renderGallery() {
       if (t) {
         drawThumb(t, x, y, 2, !pet.isRegistered(dex));
         if (pet.isShinyRegistered(dex)) {
-          gfx->setTextColor(UI_BAR_WARN);
+          uiColor(UI_BAR_WARN);
           gfx->setTextSize(2);
           gfx->setCursor(x + GAL_CELL - 12, y + 4);
           gfx->print("*");
@@ -85,7 +84,7 @@ void renderGallery() {
       } else {
         char num[6];
         snprintf(num, sizeof(num), "%d", dex);
-        gfx->setTextColor(UI_TRACK);
+        uiColor(UI_TRACK);
         gfx->setTextSize(2);
         gfx->setCursor(x + GAL_CELL / 2 - 12, y + GAL_CELL / 2 - 8);
         gfx->print(num);

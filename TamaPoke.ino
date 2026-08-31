@@ -11,20 +11,21 @@
 // Board: ESP32S3 Dev Module | Flash 16MB | PSRAM: OPI PSRAM | USB CDC On Boot: Enabled
 //
 // Sketch is the boot + loop + gesture router. Screens and minigames live in
-// ui_*.cpp / console.cpp (see ui.h).
+// src/ui/ and src/console.cpp (see src/ui/ui.h).
 
 #include <Arduino.h>
 #include <Wire.h>
-#include "pin_config.h"
+#include "hw/pin_config.h"
 #include "hw/board.h"
-#include "species.h"
-#include "dex.h"
-#include "pet.h"
-#include "sdmon.h"
-#include "rtcbat.h"
-#include "i18n.h"
-#include "audio.h"
-#include "ui.h"
+#include "game/species.h"
+#include "game/dex.h"
+#include "game/pet.h"
+#include "svc/sdmon.h"
+#include "svc/rtcbat.h"
+#include "game/i18n.h"
+#include "svc/audio.h"
+#include "ui/ui.h"
+#include "ui/ui_font.h"
 
 void ensureMon();
 void updateBrightness(uint32_t now);
@@ -73,6 +74,7 @@ void setup() {
   pet.begin();
   sdBegin();
   thumbs.load();
+  uiFontLoad();
 
   // real-time clock: apply time spent powered off
   rtcBegin();
@@ -93,6 +95,7 @@ void setup() {
 
 // load/unload the SD sprite when the species changes
 void ensureMon() {
+  if (sdDirty) uiFontLoad();
   if (pet.speciesId == monFor && monShinyFor == pet.shiny && !sdDirty) return;
   sdDirty = false;
   monFor = pet.speciesId;

@@ -1,8 +1,8 @@
-#include "ui.h"
-#include "dex.h"
-#include "i18n.h"
-#include "audio.h"
-#include "species.h"
+#include "ui/ui.h"
+#include "game/dex.h"
+#include "game/i18n.h"
+#include "svc/audio.h"
+#include "game/species.h"
 #include <math.h>
 
 // "taps" minigame: keep the pokeball in the air
@@ -198,19 +198,19 @@ void renderSack() {
     if (now > sackOverUntil) { sackOpen = false; return; }
     char b[20];
     snprintf(b, sizeof(b), T(S_HITS_FMT), sackHits);
-    gfx->setTextColor(ink);
+    uiColor(ink);
     printCx(3, SY(150), b);
     char g[18];
     snprintf(g, sizeof(g), T(S_STR_GAIN_FMT), sackGain);
-    gfx->setTextColor(UI_BAR_BAD);
+    uiColor(UI_BAR_BAD);
     printCx(2, SY(210), g);
     if (sackNewHi && sackHits > 0) {
-      gfx->setTextColor(UI_BAR_WARN);
+      uiColor(UI_BAR_WARN);
       printCx(2, SY(256), T(S_NEW_RECORD));
     } else {
       char r[18];
       snprintf(r, sizeof(r), T(S_RECORD_FMT), pet.strHi);
-      gfx->setTextColor(ink);
+      uiColor(ink);
       printCx(2, SY(256), r);
     }
     gfx->flush();
@@ -240,7 +240,7 @@ void renderSack() {
 
   char buf[8];
   snprintf(buf, sizeof(buf), "%u", sackHits);
-  gfx->setTextColor(ink);
+  uiColor(ink);
   printCx(4, SY(250), buf);
   printCx(2, SY(300), T(S_HIT_FAST));
 
@@ -367,18 +367,18 @@ void renderWalk() {
       drawPmdAct(PMD_IDLE, WALK_PET_X, WALK_GROUND, now, true, false, 3);
     char buf[22];
     snprintf(buf, sizeof(buf), T(S_SCORE_FMT), walkScore);
-    gfx->setTextColor(ink);
+    uiColor(ink);
     printCx(3, SY(140), buf);
     if (walkNewHi && walkScore > 0) {
-      gfx->setTextColor(UI_BAR_WARN);
+      uiColor(UI_BAR_WARN);
       printCx(2, SY(190), T(S_NEW_RECORD));
     } else {
       char rec[20];
       snprintf(rec, sizeof(rec), T(S_RECORD_FMT), pet.walkHi);
-      gfx->setTextColor(ink);
+      uiColor(ink);
       printCx(2, SY(190), rec);
     }
-    gfx->setTextColor(ink);
+    uiColor(ink);
     printCx(2, SY(230), T(S_PLUS_JOY));
     gfx->flush();
     return;
@@ -468,7 +468,7 @@ void renderWalk() {
 
   char buf[8];
   snprintf(buf, sizeof(buf), "%u", walkScore);
-  gfx->setTextColor(ink);
+  uiColor(ink);
   printCx(3, SY(108), buf);
 
   drawGameExitCloud(ink);
@@ -490,19 +490,19 @@ void renderGame() {
     }
     char buf[22];
     snprintf(buf, sizeof(buf), T(S_SCORE_FMT), gameScore);
-    gfx->setTextColor(ink);
+    uiColor(ink);
     printCx(3, SY(160), buf);
     if (gameNewHi && gameScore > 0) {
-      gfx->setTextColor(UI_BAR_WARN);
+      uiColor(UI_BAR_WARN);
       printCx(2, SY(214), T(S_NEW_RECORD));
     } else {
       char rec[20];
       snprintf(rec, sizeof(rec), T(S_RECORD_FMT), pet.gameHi);
-      gfx->setTextColor(ink);
+      uiColor(ink);
       printCx(2, SY(214), rec);
     }
     const char *msg = gameScore >= 10 ? T(S_GREAT_JOY) : T(S_PLUS_JOY);
-    gfx->setTextColor(ink);
+    uiColor(ink);
     printCx(2, SY(250), msg);
     gfx->flush();
     return;
@@ -514,7 +514,7 @@ void renderGame() {
   // score, record and lives — below the exit cloud
   char buf[8];
   snprintf(buf, sizeof(buf), "%u", gameScore);
-  gfx->setTextColor(ink);
+  uiColor(ink);
   printCx(3, SY(108), buf);
   char rec[12];
   snprintf(rec, sizeof(rec), T(S_REC_FMT), pet.gameHi);
@@ -566,6 +566,6 @@ void drawGameExitCloud(uint16_t ink) {
   gfx->fillCircle(ecx - SX(18), ecy - SY(2), SY(30), UI_WHITE);
   gfx->fillCircle(ecx + SX(20), ecy - SY(4), SY(28), UI_WHITE);
   gfx->fillCircle(ecx, ecy - SY(10), SY(32), UI_WHITE);
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, ecy - SY(10), T(S_EXIT));
 }

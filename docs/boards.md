@@ -2,7 +2,7 @@
 
 One firmware image is one physical board. You do not detect panels at runtime.
 You add a **folder** under `boards/` whose name is the board id, then pass that
-name at compile time. `pin_config.h` has no board `#if`.
+name at compile time. `src/hw/pin_config.h` has no board `#if`.
 
 Do not flash a 1.85C image on a 1.75, or the reverse. The chips differ.
 
@@ -31,7 +31,7 @@ The flag is a **bare token** (the folder name), not a string:
 -DTAMAPOKE_BOARD_DIR=lcd_185c
 ```
 
-`pin_config.h` turns that into `#include "boards/lcd_185c/pins.h"` (and the
+`src/hw/pin_config.h` turns that into `#include "boards/lcd_185c/pins.h"` (and the
 other headers). A bad or missing folder is a compile error on the include.
 
 | Folder | Select |
@@ -43,8 +43,9 @@ other headers). A bad or missing folder is a compile error on the include.
 
 1. **Folder** — `boards/your_board/` with the six headers below. Same function
    names and macros as the existing profiles. No `#if TAMAPOKE_BOARD` in
-   `board.cpp`, `audio.cpp`, `rtcbat.cpp`, or `expander.cpp`.
-2. **Do not edit `pin_config.h`.** It already includes whatever folder you pass.
+   `src/hw/board.cpp`, `src/svc/audio.cpp`, `src/svc/rtcbat.cpp`, or
+   `src/hw/expander.cpp`.
+2. **Do not edit `src/hw/pin_config.h`.** It already includes whatever folder you pass.
 3. **PIO** (if you use PlatformIO) — copy `board.json` into the folder and set
    `board = your_board/board` plus `-DTAMAPOKE_BOARD_DIR=your_board`.
    Makefile: `make BOARD=your_board` (env name = folder name).
@@ -52,7 +53,7 @@ other headers). A bad or missing folder is a compile error on the include.
    scale it. Set `PET_SCALE` so the pet is roughly the same fraction of the
    circle. On a new *round* size, walk the UI once: top captions and side bars
    clip on a circular bezel if they still use unscaled 466 coordinates.
-5. **Arduino 3.2 I2C** — `Wire.begin` happens once in `board.cpp`. Touch, RTC,
+5. **Arduino 3.2 I2C** — `Wire.begin` happens once in `src/hw/board.cpp`. Touch, RTC,
    and PMU `begin(..., sda, scl)` must pass `-1, -1` after that.
 
 ## The headers
@@ -72,7 +73,7 @@ Arduino_GFX *boardCreatePanel(Arduino_DataBus *bus);
 void boardSetPanelBrightness(Arduino_GFX *panel, uint8_t level);  // 0-255
 ```
 
-`board.cpp` always builds:
+`src/hw/board.cpp` always builds:
 
 ```cpp
 bus = new Arduino_ESP32QSPI(LCD_CS, LCD_SCLK, LCD_SDIO0, ...);
@@ -82,7 +83,7 @@ gfx->begin(80000000);
 boardSetPanelBrightness(panel, 180);
 ```
 
-If your bus is not QSPI, you will need a small change in `board.cpp` (that is
+If your bus is not QSPI, you will need a small change in `src/hw/board.cpp` (that is
 the one shared hook). Prefer keeping QSPI and only swapping the panel class.
 
 Examples already in tree:

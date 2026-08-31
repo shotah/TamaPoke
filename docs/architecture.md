@@ -9,18 +9,18 @@ round 466×466 layout. **Hardware** is swapped at compile time: one folder under
                     │           TamaPoke.ino              │
                     │  loop, home, minigames, gestures    │
                     │  coords via SX()/SY() and PET_SCALE │
-                    │  ui_card.cpp + ui_gallery.cpp       │
+                    │  src/ui/  src/game/  src/console.cpp│
                     └──────────────┬──────────────────────┘
                                    │
               gfx, boardTouchGet, boardSetBrightness, audio
                                    │
                     ┌──────────────▼──────────────────────┐
-                    │     board.cpp + audio.cpp           │
-                    │     rtcbat.cpp, sdmon.cpp, pet.cpp  │
+                    │     src/hw/board.cpp + src/svc/     │
+                    │     audio, rtcbat, sdmon, pet       │
                     └──────────────┬──────────────────────┘
                                    │
                     ┌──────────────▼──────────────────────┐
-                    │            pin_config.h             │
+                    │         src/hw/pin_config.h         │
                     │   includes one boards/<id>/ profile │
                     └──────────────┬──────────────────────┘
                                    │
@@ -35,9 +35,9 @@ round 466×466 layout. **Hardware** is swapped at compile time: one folder under
 
 | Layer | Files | Rule |
 |---|---|---|
-| Game | `TamaPoke.ino`, `ui.h` / `ui_card.cpp` / `ui_gallery.cpp`, `pet.*`, `i18n.*`, `dex.h`, `species.h` | No chip names, no GPIO numbers. Draw at 466 and scale. |
-| Services | `audio.cpp`, `sdmon.cpp`, `rtcbat.cpp` | Use macros/functions from the selected board profile. |
-| Board HAL | `board.cpp`, `hw/board.h` | Wire, panel canvas, touch IRQ wiring. Calls into `boards/<id>/`. |
+| Game | `TamaPoke.ino`, `src/ui/`, `src/game/` (`pet.*`, `i18n.*`, `dex.h`, `species.h`) | No chip names, no GPIO numbers. Draw at 466 and scale. |
+| Services | `src/svc/` (`audio`, `sdmon`, `rtcbat`) | Use macros/functions from the selected board profile. |
+| Board HAL | `src/hw/` (`board.cpp`, `board.h`, `pin_config.h`, expander) | Wire, panel canvas, touch IRQ wiring. Calls into `boards/<id>/`. |
 | Board profile | `boards/<dir>/{pins,audio,display,touch,power,expander_impl}.h` | The only place a new panel, codec, or PMU is allowed. |
 | PIO board JSON | `boards/<dir>/board.json` | Flash/PSRAM/USB for PlatformIO. Not the game HAL. |
 | Host tests | `test/` | `make test` (Python). `make test-native` (g++ + `test/test_host/`). |

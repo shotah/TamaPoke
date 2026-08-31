@@ -1,5 +1,5 @@
-#include "sdmon.h"
-#include "pin_config.h"
+#include "svc/sdmon.h"
+#include "hw/pin_config.h"
 #include <FS.h>
 #include <SD_MMC.h>
 

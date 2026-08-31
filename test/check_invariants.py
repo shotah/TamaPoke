@@ -16,13 +16,13 @@ def fail(msg: str) -> None:
 
 def firmware_src() -> str:
     parts = [p.read_text() for p in sorted(ROOT.glob("*.ino"))]
-    parts += [p.read_text() for p in sorted(ROOT.glob("*.cpp")) if p.parent == ROOT]
-    parts += [p.read_text() for p in sorted(ROOT.glob("*.h")) if p.parent == ROOT]
+    parts += [p.read_text() for p in sorted((ROOT / "src").rglob("*.cpp"))]
+    parts += [p.read_text() for p in sorted((ROOT / "src").rglob("*.h"))]
     return "\n".join(parts)
 
 
 def test_dex() -> None:
-    text = (ROOT / "dex.h").read_text()
+    text = (ROOT / "src/game/dex.h").read_text()
     m = re.search(r"#define DEX_COUNT (\d+)", text)
     if not m or int(m.group(1)) != 151:
         fail("DEX_COUNT should be 151")
@@ -75,7 +75,7 @@ def _fmt_tokens(s: str) -> list[str]:
 
 
 def test_i18n() -> None:
-    header = (ROOT / "i18n.h").read_text()
+    header = (ROOT / "src/game/i18n.h").read_text()
     if "LANG_DEFAULT LANG_EN" not in header:
         fail("LANG_DEFAULT should be LANG_EN")
     if "LANG_JA" not in header or "LANG_ZH" not in header:
@@ -84,7 +84,7 @@ def test_i18n() -> None:
         if sid not in header:
             fail(f"{sid} missing from i18n.h")
 
-    cpp = (ROOT / "i18n.cpp").read_text()
+    cpp = (ROOT / "src/game/i18n.cpp").read_text()
     start = cpp.find("STRINGS[")
     end = cpp.find("};", start)
     if start < 0 or end < 0:
@@ -96,7 +96,8 @@ def test_i18n() -> None:
     for i, block in enumerate(blocks):
         rows = re.findall(r'"((?:\\.|[^"\\])*)"', block)
         langs.append(rows)
-        if any(ord(c) > 127 for s in rows for c in s):
+        # Latin rows stay ASCII (6x8). JA=6 and ZH=7 are Unifont on the SD.
+        if i < 6 and any(ord(c) > 127 for s in rows for c in s):
             fail(f"language {i} has a non-ASCII byte (font is ASCII-only)")
     n = len(langs[0])
     if n < 80:
@@ -112,7 +113,7 @@ def test_i18n() -> None:
             if _fmt_tokens(rows[i]) != want:
                 fail(f"lang {li} string {i} format { _fmt_tokens(rows[i]) } != EN {want}")
 
-    card = (ROOT / "ui_card.cpp").read_text()
+    card = (ROOT / "src/ui/ui_card.cpp").read_text()
     if '"JA"' not in card or '"ZH"' not in card:
         fail("language pill missing JA/ZH")
     print("ok  i18n")
@@ -128,7 +129,7 @@ def test_berry_rule() -> None:
 
 
 def test_sleep_sick() -> None:
-    pet_h = (ROOT / "pet.h").read_text()
+    pet_h = (ROOT / "src/game/pet.h").read_text()
     energy = int(re.search(r"#define SLEEP_ENERGY (\d+)", pet_h).group(1))
     floor = int(re.search(r"#define SLEEP_HYG_FLOOR (\d+)", pet_h).group(1))
     sick = int(re.search(r"#define SICK_HYG (\d+)", pet_h).group(1))
@@ -141,7 +142,7 @@ def test_sleep_sick() -> None:
         fail("food tray should offer medicine")
     if "pet.dbgSick" not in src:
         fail("serial SICK helper missing")
-    if "SPR_ICON_MED" not in (ROOT / "species.h").read_text():
+    if "SPR_ICON_MED" not in (ROOT / "src/game/species.h").read_text():
         fail("SPR_ICON_MED missing from species.h")
     print("ok  sleep/sick")
 

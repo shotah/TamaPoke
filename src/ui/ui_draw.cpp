@@ -1,15 +1,31 @@
-#include "ui.h"
+#include "ui/ui.h"
+#include "ui/ui_font.h"
 #include <string.h>
+
+uint16_t gPrintCol = 0xFFFF;
+
+void uiColor(uint16_t c) {
+  gPrintCol = c;
+  gfx->setTextColor(c);
+}
 
 int flashIdxForDex(int16_t dex) {
   static const int8_t IDX[10] = { -1, 3, 4, 5, 0, 1, 2, 6, 7, 8 };
   return (dex >= 1 && dex <= 9) ? IDX[dex] : -1;
 }
 
-void printCx(uint8_t size, int y, const char *s) {
+void printAt(uint8_t size, int x, int y, const char *s) {
+  if (uiFontReady()) {
+    uiFontPrint(x, y, size, s);
+    return;
+  }
   gfx->setTextSize(size);
-  gfx->setCursor(CX - (int)strlen(s) * 3 * (int)size, y);
+  gfx->setCursor(x, y);
   gfx->print(s);
+}
+
+void printCx(uint8_t size, int y, const char *s) {
+  printAt(size, CX - textWidth(size, s) / 2, y, s);
 }
 
 uint16_t inkColor() { return gNight ? UI_INK_NIGHT : UI_INK; }

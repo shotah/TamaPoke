@@ -45,7 +45,7 @@ endif
 .DEFAULT_GOAL := help
 
 .PHONY: help deps build upload flash monitor test test-native \
-        sprites thumbs bundle web \
+        sprites thumbs fonts bundle web \
         sd-copy sd-send sd-ls \
         clean clean-sprites
 
@@ -63,6 +63,7 @@ help: ## Show this help
 	@echo "Sprites (~40 MB, PMD SpriteCollab, needs network):"
 	@echo "  sprites            Pack all 151 + shinies + thumbs"
 	@echo "  thumbs             Rebuild thumbs.bin from already-packed mons"
+	@echo "  fonts              Pack Unifont JA/ZH faces -> font_ja.bin font_zh.bin"
 	@echo "  bundle             Pack web/sprites.pak for the browser installer"
 	@echo ""
 	@echo "microSD (FAT32, files go in /mons on the card):"
@@ -101,7 +102,7 @@ test: ## Host checks \(no board\)
 
 test-native: ## Host C++ tests via g++ \(does not need libc headers\)
 	mkdir -p .pio
-	g++ -std=c++20 -Itest/support -I. test/test_host/test_host.cpp -o .pio/test_host
+	g++ -std=c++20 -Itest/support -Isrc -I. test/test_host/test_host.cpp -o .pio/test_host
 	.pio/test_host
 
 upload: ## Flash firmware to $(PORT)
@@ -126,6 +127,9 @@ sprites: $(VENV)/bin/python ## Fetch + pack 151 + shinies, then thumbs
 
 thumbs: $(VENV)/bin/python ## Rebuild thumbs.bin from packed TPK2 files
 	$(PY) tools/make_thumbs.py
+
+fonts: $(VENV)/bin/python ## Pack Unifont subsets for JA / ZH
+	$(PY) tools/pack_font.py
 
 bundle: $(VENV)/bin/python ## Bundle packed sprites into web/sprites.pak
 	$(PY) tools/pack_bundle.py

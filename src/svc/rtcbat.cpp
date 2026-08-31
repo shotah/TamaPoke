@@ -1,5 +1,5 @@
-#include "rtcbat.h"
-#include "pin_config.h"
+#include "svc/rtcbat.h"
+#include "hw/pin_config.h"
 #include TAMAPOKE_POWER_H
 #include <Wire.h>
 #include <time.h>

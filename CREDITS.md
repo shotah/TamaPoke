@@ -13,6 +13,7 @@ This project is not affiliated with or endorsed by any of those companies.
 |---|---|---|
 | **All sprites** (idle, walk, sleep, eat, hurt, attack…) | [PMD Sprite Collaboration (PMDCollab/SpriteCollab)](https://github.com/PMDCollab/SpriteCollab) | Mystery-Dungeon-style animated sprites used everywhere: main screen, stat card, minigame, and the Pokédex grid + detail view |
 | **Gen 1 base stats** | [PokéAPI](https://pokeapi.co) | Real ATK/DEF/SPD/HP for each species |
+| **JA / ZH UI glyphs** | [GNU Unifont](https://unifoundry.com/unifont/) (SIL OFL) + U8g2 japanese1 / chinese2 maps | Packed to `/mons/font_ja.bin` and `font_zh.bin` |
 
 The **SpriteCollab** sprites are the work of its community of artists under their
 own terms (Creative Commons Attribution-NonCommercial 4.0). Per-species/per-author

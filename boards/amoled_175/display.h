@@ -1,6 +1,6 @@
 #pragma once
 #include "Arduino_GFX_Library.h"
-#include "rtcbat.h"
+#include "svc/rtcbat.h"
 
 // CO5300 466x466 QSPI AMOLED. Panel VDD is AXP2101 BLDO1 — enable it
 // before gfx->begin() or the screen stays black after a full drain.

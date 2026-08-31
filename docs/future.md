@@ -138,5 +138,6 @@ streamed music, runtime board detect.
 ## How to add an item
 
 One line under the right heading: what the player does, which packed action or
-stat it touches, and what we refuse (second pet, extra GPIO, new font). Cross
-it out when it ships, or move the numbers into the README game manual.
+stat it touches, and what we refuse (second pet, extra GPIO, a font just so a
+minigame can exist). JA/ZH Unifont on the SD is its own item, not a game
+dependency. Cross it out when it ships, or move the numbers into the README.

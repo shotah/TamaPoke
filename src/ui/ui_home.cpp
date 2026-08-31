@@ -1,9 +1,9 @@
-#include "ui.h"
-#include "dex.h"
-#include "i18n.h"
-#include "audio.h"
-#include "rtcbat.h"
-#include "species.h"
+#include "ui/ui.h"
+#include "game/dex.h"
+#include "game/i18n.h"
+#include "svc/audio.h"
+#include "svc/rtcbat.h"
+#include "game/species.h"
 #include <math.h>
 
 PetBeh beh;
@@ -62,7 +62,7 @@ void renderStarterSelect() {
   gfx->fillScreen(RGB565_BLACK);
   gfx->fillCircle(CX, CY, CX - 2, UI_BG_DAY);
   const char *t = T(S_CHOOSE_STARTER);
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, SY(56), t);
   for (int i = 0; i < 3; i++) {
     int16_t d = STARTER_DEX[i];
@@ -72,7 +72,7 @@ void renderStarterSelect() {
     gfx->drawRoundRect(SX(70), ry, SX(326), STARTER_ROW_H, 14, de.accent);
     const uint8_t *th = thumbs.get(d);
     if (th) drawThumb(th, SX(76), ry - 5, 3, false);
-    gfx->setTextColor(UI_INK);
+    uiColor(UI_INK);
     gfx->setTextSize(2);
     gfx->setCursor(SX(178), ry + SY(20));
     gfx->print(dexName(d));
@@ -143,13 +143,13 @@ void render() {
     int lineY = SY(328);
     if (pet.eggRarity() >= R_RARO) {
       const char *rar = (pet.eggRarity() == R_LEGENDARIO) ? T(S_EGG_LEGEND) : T(S_EGG_RARE);
-      gfx->setTextColor(pet.eggRarity() == R_LEGENDARIO ? UI_BAR_WARN : 0x4C98);
+      uiColor(pet.eggRarity() == R_LEGENDARIO ? UI_BAR_WARN : 0x4C98);
       printCx(2, lineY, rar);
       lineY += SY(24);
     }
     char reg[24];
     snprintf(reg, sizeof(reg), T(S_POKEDEX_FMT), pet.registeredCount());
-    gfx->setTextColor(inkColor());
+    uiColor(inkColor());
     printCx(2, lineY, reg);
     printCx(2, lineY + SY(24), T(S_EGG_BLESS));
   } else {
@@ -206,7 +206,7 @@ void render() {
       gfx->fillCircle(SX(258), SY(328), 6, inkColor());
       gfx->fillCircle(SX(274), SY(314), 5, inkColor());
       // extra well: not built yet
-      gfx->setTextColor(inkColor());
+      uiColor(inkColor());
       gfx->setTextSize(2);
       gfx->setCursor(SX(320), SY(312));
       gfx->print("?");
@@ -222,16 +222,14 @@ void render() {
       gfx->drawRoundRect(SX(94), SY(168), SX(278), SY(152), 16, UI_INK);
       char q[28];
       snprintf(q, sizeof(q), T(S_RELEASE_FMT), dexName(pet.speciesId));
-      gfx->setTextColor(UI_INK);
+      uiColor(UI_INK);
       printCx(2, SY(196), q);
       gfx->fillRoundRect(SX(118), SY(252), SX(100), SY(52), 12, UI_BAR_OK);
-      gfx->setTextColor(UI_WHITE);
+      uiColor(UI_WHITE);
       gfx->setTextSize(2);
-      gfx->setCursor(SX(118) + (SX(100) - (int)strlen(T(S_YES)) * 12) / 2, SY(270));
-      gfx->print(T(S_YES));
+      printAt(2, SX(118) + (SX(100) - textWidth(2, T(S_YES))) / 2, SY(270), T(S_YES));
       gfx->fillRoundRect(SX(248), SY(252), SX(100), SY(52), 12, UI_BAR_BAD);
-      gfx->setCursor(SX(248) + (SX(100) - (int)strlen(T(S_NO)) * 12) / 2, SY(270));
-      gfx->print(T(S_NO));
+      printAt(2, SX(248) + (SX(100) - textWidth(2, T(S_NO))) / 2, SY(270), T(S_NO));
     }
   }
 
@@ -254,7 +252,7 @@ void drawStreakBadge() {
   gfx->fillTriangle(x + 8, y + 7, x + 4, y + 17, x + 12, y + 17, UI_BAR_WARN);
   char s[6];
   snprintf(s, sizeof(s), "%u", pet.streak);
-  gfx->setTextColor(inkColor());
+  uiColor(inkColor());
   gfx->setTextSize(2);
   gfx->setCursor(x + SX(22), y + 2);
   gfx->print(s);
@@ -276,7 +274,7 @@ void drawCelebration() {
   if (!l1) return;
   gfx->fillRoundRect(SX(73), SY(150), SX(314), SY(96), 16, UI_BAR_WARN);
   gfx->drawRoundRect(SX(73), SY(150), SX(314), SY(96), 16, UI_INK);
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, SY(176), l1);
   printCx(2, SY(212), l2);
 }
@@ -306,9 +304,9 @@ void drawBattery() {
 
 void drawHeader(const char *name, uint16_t nameColor, const char *msg) {
   drawBattery();
-  gfx->setTextColor(nameColor);
+  uiColor(nameColor);
   printCx(2, SY(48), name);
-  gfx->setTextColor(inkColor());
+  uiColor(inkColor());
   printCx(2, SY(78), msg);
 }
 
@@ -385,20 +383,20 @@ void drawChoiceDialog() {
   }
   gfx->fillRoundRect(SX(73), SY(156), SX(314), SY(188), 16, UI_WHITE);
   gfx->drawRoundRect(SX(73), SY(156), SX(314), SY(188), 16, UI_INK);
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, SY(176), q);
   gfx->fillRoundRect(SX(93), SY(206), SX(280), SY(52), 12, c1);
-  gfx->setTextColor(t1);
+  uiColor(t1);
   printCx(2, SY(224), o1);
   gfx->fillRoundRect(SX(93), SY(268), SX(280), SY(52), 12, c2);
-  gfx->setTextColor(t2);
+  uiColor(t2);
   printCx(2, SY(286), o2);
 }
 
 void drawHowto() {
   gfx->fillRoundRect(SX(70), SY(180), SX(326), SY(110), 16, UI_WHITE);
   gfx->drawRoundRect(SX(70), SY(180), SX(326), SY(110), 16, UI_INK);
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, SY(204), T(S_HOWTO_1));
   printCx(2, SY(244), T(S_HOWTO_2));
 }
@@ -411,7 +409,7 @@ void drawEvolveButton() {
   gfx->fillRoundRect(x, y, w, h, 18, UI_BAR_BAD);
   gfx->drawRoundRect(x, y, w, h, 18, UI_WHITE);
   gfx->drawRoundRect(x + 2, y + 2, w - 4, h - 4, 16, UI_WHITE);
-  gfx->setTextColor(UI_WHITE);
+  uiColor(UI_WHITE);
   const char *t = T(S_EVO_TAP);
   printCx(2, y + h / 2 - 8, t);
 }
@@ -426,10 +424,8 @@ void drawFarewellButton() {
   char buf[52];
   const char *nm = pet.nick[0] ? pet.nick : dexName(pet.speciesId);
   snprintf(buf, sizeof(buf), T(S_FAREWELL_BTN), nm);
-  gfx->setTextColor(UI_INK);
-  gfx->setTextSize(2);
-  gfx->setCursor(CX - (int)strlen(buf) * 6, y + h / 2 - 8);
-  gfx->print(buf);
+  uiColor(UI_INK);
+  printAt(2, CX - textWidth(2, buf) / 2, y + h / 2 - 8, buf);
 }
 
 // somber neglect-runaway CTA: "<name> feels abandoned..."
@@ -443,10 +439,8 @@ void drawRunawayButton() {
   char buf[52];
   const char *nm = pet.nick[0] ? pet.nick : dexName(pet.speciesId);
   snprintf(buf, sizeof(buf), T(S_RUNAWAY_BTN), nm);
-  gfx->setTextColor(C565(0xc8, 0xd2, 0xe0));
-  gfx->setTextSize(2);
-  gfx->setCursor(CX - (int)strlen(buf) * 6, y + h / 2 - 8);
-  gfx->print(buf);
+  uiColor(C565(0xc8, 0xd2, 0xe0));
+  printAt(2, CX - textWidth(2, buf) / 2, y + h / 2 - 8, buf);
 }
 
 // epic evolution animation: radial halo + spinning rays + sprite blink
@@ -497,7 +491,7 @@ void drawPet() {
   int fi = flashIdxForDex(pet.speciesId);
   if (fi < 0) {
     // no SD and no flash sprite: clear notice that sprites are missing
-    gfx->setTextColor(inkColor());
+    uiColor(inkColor());
     printCx(5, PET_CY - SY(64), "?");
     gfx->setTextSize(2);
     printCx(2, PET_CY - 4, T(S_NO_SPRITES));
@@ -674,7 +668,7 @@ void drawSnore() {
   uint32_t now = millis();
   int petX = pmd.loaded ? (int)beh.x : CX;
   int headY = pmd.loaded ? (PET_GROUND - SY(108)) : (PET_CY - SY(52));
-  gfx->setTextColor(inkColor());
+  uiColor(inkColor());
   gfx->setTextSize(2);
   static const char *const zs[] = { "Z", "Zz", "Zzz" };
   for (int i = 0; i < 2; i++) {
@@ -740,18 +734,21 @@ void drawPoops() {
 }
 
 void drawBars() {
-  drawBar(SX(78), SY(316), T(S_BAR_FOOD), pet.fullness);
-  drawBar(SX(244), SY(316), T(S_BAR_JOY), pet.joy);
-  drawBar(SX(78), SY(344), T(S_BAR_ENE), pet.energy);
-  drawBar(SX(244), SY(344), T(S_BAR_HYG), pet.hygiene);
+  // CJK labels are 16px cells; pull the row left so 3 kana do not sit on the fill.
+  int left = uiFontReady() ? SX(52) : SX(78);
+  int right = uiFontReady() ? SX(228) : SX(244);
+  drawBar(left, SY(316), T(S_BAR_FOOD), pet.fullness);
+  drawBar(right, SY(316), T(S_BAR_JOY), pet.joy);
+  drawBar(left, SY(344), T(S_BAR_ENE), pet.energy);
+  drawBar(right, SY(344), T(S_BAR_HYG), pet.hygiene);
 }
 
 void drawBar(int x, int y, const char *label, uint8_t val) {
-  gfx->setTextColor(inkColor());
-  gfx->setTextSize(2);
-  gfx->setCursor(x, y);
-  gfx->print(label);
-  int bx = x + SX(52), bw = SX(88), bh = SY(14);
+  uiColor(inkColor());
+  printAt(2, x, y, label);
+  int gap = SX(6);
+  int bx = x + textWidth(2, label) + gap;
+  int bw = SX(88), bh = SY(14);
   uint16_t fill = (val >= 50) ? UI_BAR_OK : (val >= 25) ? UI_BAR_WARN : UI_BAR_BAD;
   gfx->fillRoundRect(bx, y, bw, bh, 4, UI_TRACK);
   int fw = (bw - 4) * val / 100;

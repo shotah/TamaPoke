@@ -1,8 +1,8 @@
 #pragma once
 #include <Arduino.h>
 
-// Supported languages. The firmware font is ASCII-only: no accents, and
-// Japanese / Chinese are romanized (romaji / pinyin) so they actually draw.
+// Supported languages. Latin UI is the built-in 6x8 face (no accents).
+// JA / ZH use Unifont from /mons/font_ja.bin and font_zh.bin on the SD.
 enum Lang : uint8_t {
   LANG_ES = 0, LANG_EN, LANG_FR, LANG_DE, LANG_IT, LANG_PT,
   LANG_JA, LANG_ZH, LANG_COUNT

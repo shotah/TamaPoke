@@ -1,8 +1,8 @@
-#include "ui.h"
-#include "dex.h"
-#include "i18n.h"
-#include "audio.h"
-#include "rtcbat.h"
+#include "ui/ui.h"
+#include "game/dex.h"
+#include "game/i18n.h"
+#include "svc/audio.h"
+#include "svc/rtcbat.h"
 
 bool cardOpen = false;        // pet card (vertical swipe)
 bool kbOpen = false;          // keyboard to rename the pet
@@ -13,10 +13,8 @@ bool clockOpen = false;       // clock-set screen (swipe down)
 int clockH = 12, clockM = 0;  // time being edited
 
 static void drawCardStat(int y, const char *label, uint16_t val, uint16_t maxBar, uint16_t color) {
-  gfx->setTextColor(UI_INK);
-  gfx->setTextSize(2);
-  gfx->setCursor(SX(72), y);
-  gfx->print(label);
+  uiColor(UI_INK);
+  printAt(2, SX(72), y, label);
   char num[8];
   snprintf(num, sizeof(num), "%u", val);
   gfx->setCursor(SX(300), y);
@@ -51,7 +49,7 @@ static void drawClockBtn(int x, int y, const char *l) {
   int s = SX(58);
   gfx->fillRoundRect(x, y, s, s, 12, UI_WHITE);
   gfx->drawRoundRect(x, y, s, s, 12, UI_INK);
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   gfx->setTextSize(3);
   gfx->setCursor(x + s / 2 - 9, y + s / 2 - 12);
   gfx->print(l);
@@ -69,7 +67,7 @@ static const char *const LANG_CODES[LANG_COUNT] = {
 void renderClock() {
   gfx->fillScreen(RGB565_BLACK);
   gfx->fillCircle(CX, CY, CX - 2, UI_BG_DAY);
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, SY(40), T(S_SET_TIME));
 
   char t[8];
@@ -80,41 +78,36 @@ void renderClock() {
   drawClockBtn(SX(170), SY(176), "+");  // hour +
   drawClockBtn(SX(252), SY(176), "-");  // min -
   drawClockBtn(SX(318), SY(176), "+");  // min +
-  gfx->setTextSize(2);
-  gfx->setTextColor(UI_TRACK);
-  gfx->setCursor(SX(112), SY(240));
-  gfx->print(T(S_HOUR));
-  gfx->setCursor(SX(260), SY(240));
-  gfx->print(T(S_MIN));
+  uiColor(UI_TRACK);
+  printAt(2, SX(112), SY(240), T(S_HOUR));
+  printAt(2, SX(260), SY(240), T(S_MIN));
 
   // sound toggle (left of the language row)
   bool snd = audioEnabled();
   const char *sl = snd ? T(S_SND_ON) : T(S_SND_OFF);
   gfx->fillRoundRect(SX(28), LANG_PILL_Y, SX(120), LANG_PILL_H, 8, snd ? UI_BAR_OK : UI_WHITE);
   gfx->drawRoundRect(SX(28), LANG_PILL_Y, SX(120), LANG_PILL_H, 8, UI_INK);
-  gfx->setTextColor(snd ? UI_BG_DAY : UI_INK);
+  uiColor(snd ? UI_BG_DAY : UI_INK);
   gfx->setTextSize(2);
-  gfx->setCursor(SX(28) + (SX(120) - (int)strlen(sl) * 12) / 2, LANG_PILL_Y + SY(8));
-  gfx->print(sl);
+  printAt(2, SX(28) + (SX(120) - textWidth(2, sl)) / 2, LANG_PILL_Y + SY(8), sl);
 
   // language picker: one pill that cycles languages on tap
   gfx->fillRoundRect(LANG_PILL_X, LANG_PILL_Y, LANG_PILL_W, LANG_PILL_H, 8, UI_WHITE);
   gfx->drawRoundRect(LANG_PILL_X, LANG_PILL_Y, LANG_PILL_W, LANG_PILL_H, 8, UI_INK);
   char lp[10];
   snprintf(lp, sizeof(lp), "%s >", LANG_CODES[gLang]);
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   gfx->setTextSize(2);
   gfx->setCursor(LANG_PILL_X + (LANG_PILL_W - (int)strlen(lp) * 12) / 2, LANG_PILL_Y + SY(8));
   gfx->print(lp);
 
   gfx->fillRoundRect(SX(133), SY(340), SX(200), SY(48), 14, UI_BAR_OK);
-  gfx->setTextColor(UI_BG_DAY);
+  uiColor(UI_BG_DAY);
   printCx(2, SY(350), "OK");
 
-  gfx->setTextColor(UI_TRACK);
+  uiColor(UI_TRACK);
   gfx->setTextSize(2);
-  gfx->setCursor(CX - strlen(T(S_CLOCK_CANCEL)) * 6, SY(410));
-  gfx->print(T(S_CLOCK_CANCEL));
+  printAt(2, CX - textWidth(2, T(S_CLOCK_CANCEL)) / 2, SY(410), T(S_CLOCK_CANCEL));
 
   // firmware version (discreet, at the very bottom)
   char ver[20];
@@ -160,11 +153,11 @@ static void renderCardProfile() {
   const char *nm = pet.nick[0] ? pet.nick : dexName(pet.speciesId);
   char head[26];
   snprintf(head, sizeof(head), T(S_NAME_FMT), pet.shiny ? "*" : "", nm, pet.level());
-  gfx->setTextColor(d.accent);
+  uiColor(d.accent);
   printCx(2, SY(36), head);
   if (pet.nick[0]) {  // real species under the nickname
     const char *sp = dexName(pet.speciesId);
-    gfx->setTextColor(UI_TRACK);
+    uiColor(UI_TRACK);
     char sub[28];
     snprintf(sub, sizeof(sub), "(%s)", sp);
     printCx(2, SY(58), sub);
@@ -179,10 +172,8 @@ static void renderCardProfile() {
   gfx->fillTriangle(sx + 8, sy + 7, sx + 4, sy + 18, sx + 12, sy + 18, UI_BAR_WARN);
   char rl[30];
   snprintf(rl, sizeof(rl), T(S_STREAK_FMT), pet.streak, pet.bestStreak);
-  gfx->setTextColor(UI_INK);
-  gfx->setTextSize(2);
-  gfx->setCursor(sx + SX(24), sy + 2);
-  gfx->print(rl);
+  uiColor(UI_INK);
+  printAt(2, sx + SX(24), sy + 2, rl);
 
   drawCardStat(SY(258), T(S_VIN), pet.bond, 100, C565(0xd4, 0x52, 0x7e));
 
@@ -193,16 +184,16 @@ static void renderCardProfile() {
   char info[40];
   snprintf(info, sizeof(info), T(S_INFO_FMT), berry,
            (unsigned long)(pet.ageMinutes / 1440));
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, SY(288), info);
 
-  gfx->setTextColor(UI_TRACK);
+  uiColor(UI_TRACK);
   printCx(2, SY(316), T(S_RENAME_HINT));
 }
 
 // page 1: battle (4 bars + train button)
 static void renderCardStats() {
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, SY(44), T(S_BATTLE));
 
   drawCardStat(SY(110), T(S_STAT_ATK), pet.atkStat(), 260, UI_BAR_BAD);
@@ -211,7 +202,7 @@ static void renderCardStats() {
   drawCardStat(SY(236), T(S_STAT_WGT), pet.weight, 100, 0xB3C8);
 
   gfx->fillRoundRect(SX(96), SY(300), SX(274), SY(40), 12, UI_BAR_BAD);
-  gfx->setTextColor(UI_BG_DAY);
+  uiColor(UI_BG_DAY);
   printCx(2, SY(310), T(S_TRAIN_STR));
 }
 
@@ -222,7 +213,7 @@ static void renderCardMedals() {
     if (pet.hasMedal(1 << i)) got++;
   char head[20];
   snprintf(head, sizeof(head), T(S_MEDALS_FMT), got, MED_COUNT);
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, SY(44), head);
 
   for (int i = 0; i < MED_COUNT; i++) {
@@ -231,15 +222,13 @@ static void renderCardMedals() {
     gfx->fillRoundRect(x, y, SX(156), SY(42), 10, g ? UI_BAR_OK : UI_TRACK);
     if (g) {  // earned checkmark
       gfx->fillCircle(x + SX(18), y + SY(21), 9, UI_BG_DAY);
-      gfx->setTextColor(UI_BAR_OK);
+      uiColor(UI_BAR_OK);
       gfx->setTextSize(2);
       gfx->setCursor(x + SX(12), y + SY(12));
       gfx->print("v");
     }
-    gfx->setTextColor(g ? UI_BG_DAY : 0x8410);
-    gfx->setTextSize(2);
-    gfx->setCursor(x + SX(36), y + SY(12));
-    gfx->print(medalDesc(i));
+    uiColor(g ? UI_BG_DAY : 0x8410);
+    printAt(2, x + SX(36), y + SY(12), medalDesc(i));
   }
 }
 
@@ -247,7 +236,7 @@ static void renderCardMedals() {
 // that used to be invisible (how far to level/evolve and why)
 static void renderCardProgress() {
   const DexEntry &d = DEX_TBL[pet.speciesId];
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, SY(40), T(S_PROGRESS));
 
   char lv[10];
@@ -261,10 +250,10 @@ static void renderCardProgress() {
   if (fw > 0) gfx->fillRoundRect(bx + 2, by + 2, fw, bh - 4, 5, UI_BAR_OK);
   char nx[26];
   snprintf(nx, sizeof(nx), T(S_NEXT_LVL_FMT), MINUTES_PER_LEVEL - into, pet.level() + 1);
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, by + SY(28), nx);
 
-  gfx->setTextColor(UI_TRACK);
+  uiColor(UI_TRACK);
   printCx(2, SY(214), T(S_EVO_LABEL));
   char evoBuf[28];
   const char *evo;
@@ -281,12 +270,12 @@ static void renderCardProgress() {
       evo = evoBuf;
     }
   }
-  gfx->setTextColor(evoCol);
+  uiColor(evoCol);
   printCx(2, SY(240), evo);
 
   char ms[24];
   snprintf(ms, sizeof(ms), T(S_MISTAKES_FMT), pet.careMistakes);
-  gfx->setTextColor(pet.careMistakes > 0 ? UI_BAR_BAD : UI_INK);
+  uiColor(pet.careMistakes > 0 ? UI_BAR_BAD : UI_INK);
   printCx(2, SY(288), ms);
 }
 
@@ -303,10 +292,9 @@ void renderCard() {
     if (i == cardPage) gfx->fillCircle(SX(194) + i * SX(26), SY(374), 5, UI_INK);
     else gfx->drawCircle(SX(194) + i * SX(26), SY(374), 4, UI_INK);
   }
-  gfx->setTextColor(UI_TRACK);
+  uiColor(UI_TRACK);
   gfx->setTextSize(2);
-  gfx->setCursor(CX - strlen(T(S_BACK)) * 6, SY(398));
-  gfx->print(T(S_BACK));
+  printAt(2, CX - textWidth(2, T(S_BACK)) / 2, SY(398), T(S_BACK));
   gfx->flush();
 }
 
@@ -329,7 +317,7 @@ void openKeyboard() {
 void renderKeyboard() {
   gfx->fillScreen(RGB565_BLACK);
   gfx->fillCircle(CX, CY, CX - 2, UI_BG_DAY);
-  gfx->setTextColor(UI_INK);
+  uiColor(UI_INK);
   printCx(2, SY(44), T(S_NAME));
   gfx->fillRoundRect(SX(70), SY(72), SX(256), SY(36), 8, UI_WHITE);
   gfx->drawRoundRect(SX(70), SY(72), SX(256), SY(36), 8, UI_INK);
@@ -342,7 +330,7 @@ void renderKeyboard() {
     bool special = (i >= 28);
     gfx->fillRoundRect(x, y, KB_W - 6, KB_H - 6, 6, special ? UI_BAR_WARN : UI_WHITE);
     gfx->drawRoundRect(x, y, KB_W - 6, KB_H - 6, 6, UI_INK);
-    gfx->setTextColor(UI_INK);
+    uiColor(UI_INK);
     gfx->setTextSize(2);
     if (i < 28) {
       gfx->setCursor(x + KB_W / 2 - 9, y + KB_H / 2 - 10);

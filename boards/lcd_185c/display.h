@@ -1,6 +1,6 @@
 #pragma once
 #include "Arduino_GFX_Library.h"
-#include "expander.h"
+#include "hw/expander.h"
 
 // ST77916 360x360 QSPI. Reset is TCA9554 EXIO2 (not a GPIO).
 // st77916_150 is the F0=0x28 family on 2025+ Waveshare 1.85C panels.

@@ -1,9 +1,9 @@
-#include "ui.h"
-#include "dex.h"
-#include "i18n.h"
-#include "audio.h"
-#include "rtcbat.h"
-#include "sdmon.h"
+#include "ui/ui.h"
+#include "game/dex.h"
+#include "game/i18n.h"
+#include "svc/audio.h"
+#include "svc/rtcbat.h"
+#include "svc/sdmon.h"
 
 // ---------- serial console (SD provisioning + debug) ----------
 

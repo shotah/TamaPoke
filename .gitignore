@@ -2,6 +2,7 @@
 build/
 .pio/
 .venv/
+TamaPoke.ino.cpp
 
 # cacheas y artefactos regenerables del taller
 tools/downloads/

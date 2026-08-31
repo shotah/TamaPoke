@@ -1,5 +1,5 @@
 #include "hw/board.h"
-#include "pin_config.h"
+#include "hw/pin_config.h"
 #include <Wire.h>
 
 Arduino_Canvas *gfx = nullptr;

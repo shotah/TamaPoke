@@ -1,6 +1,6 @@
-#include "pet.h"
-#include "dex.h"
-#include "audio.h"
+#include "game/pet.h"
+#include "game/dex.h"
+#include "svc/audio.h"
 
 void Pet::begin() {
   prefs.begin("tamapoke", false);

@@ -1,10 +1,10 @@
 #pragma once
 #include <Arduino.h>
-#include "pin_config.h"
+#include "hw/pin_config.h"
 #include "hw/board.h"
-#include "species.h"
-#include "pet.h"
-#include "sdmon.h"
+#include "game/species.h"
+#include "game/pet.h"
+#include "svc/sdmon.h"
 
 // Firmware version. Bump this on each release (and manifest.json for the
 // web installer). Shown on the settings screen and over serial at boot.
@@ -76,7 +76,11 @@ extern uint32_t confirmUntil, choiceUntil;
 extern uint8_t choiceKind;
 extern uint32_t lastInteract;
 
+void uiColor(uint16_t c);  // setTextColor + remember for the Unifont blit
 void printCx(uint8_t size, int y, const char *s);
+void printAt(uint8_t size, int x, int y, const char *s);
+int textWidth(uint8_t size, const char *s);
+bool uiFontReady();
 uint16_t inkColor();
 uint16_t lerp565(uint16_t a, uint16_t b, int i, int n);
 int sceneHour();

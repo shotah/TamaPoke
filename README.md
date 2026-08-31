@@ -144,7 +144,7 @@ SPEED ← minigame, DEFENSE ← 12 h of unbroken good care). *(Battles: on the r
 - **AXP2101** (power management + battery + PWR button), **PCF85063** (RTC),
   microSD slot, **ES8311** audio codec (→ amplifier → external speaker on the
   MX1.25 connector)
-- Pins taken from the [official Waveshare repo](https://github.com/waveshareteam/ESP32-S3-Touch-AMOLED-1.75) (see `pin_config.h`)
+- Pins taken from the [official Waveshare repo](https://github.com/waveshareteam/ESP32-S3-Touch-AMOLED-1.75) (see `src/hw/pin_config.h`)
 
 ## Libraries (Arduino IDE / arduino-cli)
 
@@ -184,6 +184,7 @@ ACK), so you don't have to remove the card (it formats the SD to FAT if needed).
 ```bash
 python3 tools/pack_pmd.py       # fetch + pack PMD sprites: the 151 + shiny -> tools/sdcard/mons/p[s]NNN.bin
 python3 tools/make_thumbs.py    # Pokédex thumbnails (from the PMD sprites) -> thumbs.bin
+python3 tools/pack_font.py      # Unifont JA/ZH faces -> font_ja.bin font_zh.bin
 python3 tools/send_sd.py        # send tools/sdcard/mons/* to the board's SD over USB
 ```
 
@@ -251,10 +252,10 @@ witness it), each opening a two-option dialog:
   the feet (lowest content row), not the canvas. The Pokédex thumbnails
   (`thumbs.bin`, TPTH) are derived from these by `tools/make_thumbs.py`.
 - **In-house workshop** (`tools/sprites.py`): 9 primitive-drawn sprites as a
-  no-SD fallback + the UI icons. Generates `species.h`. Preview in
+  no-SD fallback + the UI icons. Generates `src/game/species.h`. Preview in
   `tools/sheet.png`, emit with `python3 tools/sprites.py emit`.
 
-`sdmon.h/.cpp` loads the PMD sprites into PSRAM (`PmdMon` for TPK2) plus the
+`src/svc/sdmon` loads the PMD sprites into PSRAM (`PmdMon` for TPK2) plus the
 thumbnails (`SdThumbs`). `SdMon` (TPK1) remains as a dormant legacy fallback only.
 
 ## Pokédex and species data
@@ -264,7 +265,7 @@ background biome), evolution line with gen-1 levels, rarities and starters.
 `tools/dex_stats.py` has the real base stats (from PokéAPI). `tools/gen_names.py`
 pulls the **official localized names** from PokéAPI into `tools/dex_names.py`
 (only French and German differ in gen 1; Spanish, Italian and Portuguese use the
-English ones). `gen_dex.py` emits `dex.h` (the `DEX_TBL[152]` table plus the
+English ones). `gen_dex.py` emits `src/game/dex.h` (the `DEX_TBL[152]` table plus the
 per-language name tables and the `dexName()` accessor). The pet's identity is its
 Pokédex number (persisted in NVS).
 
@@ -310,8 +311,8 @@ a farewell and punished by a runaway. Legendaries only with 25+ registered.
 
 **Languages:** the UI ships in 8 languages — English (default), Spanish, French,
 German, Italian, Portuguese, Japanese, Chinese — switchable from the settings
-screen (swipe down). The firmware font is ASCII-only, so Japanese and Chinese
-are **romaji / pinyin** (same reason Spanish has no accents).
+screen (swipe down). Latin UI is the built-in 6×8 face (no accents). Japanese
+and Chinese need `/mons/font_ja.bin` and `font_zh.bin` on the SD (`make fonts`).
 **Pokémon names are localized too**: French and German show the official names
 (Bulbizarre, Bisasam...); the other languages use the English ones.
 
@@ -324,16 +325,11 @@ beach, forest, volcano, mountain, snow). Sleeping forces night.
 ## Layout
 
 - `TamaPoke.ino` — init, game loop, home/scene, minigames, gestures, serial console
-- `ui.h` / `ui_card.cpp` / `ui_gallery.cpp` — pet card, clock, rename keyboard, Pokédex gallery
-- `pet.h` / `pet.cpp` — pet state and logic (stats, evolution, life cycle, streak/bond/medals, NVS)
-- `sdmon.h` / `sdmon.cpp` — TPK1 (animated) and TPK2 (PMD) sprites + thumbnails, and file reception over USB (PUT/LS)
-- `rtcbat.h` / `rtcbat.cpp` — PCF85063 RTC + AXP2101 PMU (battery, brightness, PWR button)
-- `audio.h` / `audio.cpp` — ES8311 + I2S + Game-Boy-style tone synth (non-blocking task)
-- `i18n.h` / `i18n.cpp` — the 8-language string tables
-- `dex.h` — GENERATED (`gen_dex.py`): the 151 table
-- `species.h` — GENERATED (`sprites.py`): fallback sprites, UI icons, colours
-- `hw/board.h` / `board.cpp` — I2C, QSPI canvas, touch IRQ wiring
-- `pin_config.h` — includes `boards/<TAMAPOKE_BOARD_DIR>/` (`pins`, `audio`, `display`, `touch`, `power`, `expander_impl`)
+- `src/ui/` — screens: home, card, clock, rename, gallery, games, Unifont
+- `src/game/` — pet state, i18n, generated `dex.h` / `species.h`
+- `src/svc/` — SD sprites (`sdmon`), RTC/PMU (`rtcbat`), audio synth
+- `src/hw/` — I2C/QSPI/touch (`board.*`), `pin_config.h`, expander
+- `src/console.cpp` — serial debug commands
 - `boards/` — per-device HAL + PlatformIO JSON; see [docs/boards.md](docs/boards.md)
 - `docs/` — [architecture](docs/architecture.md), [adding a board](docs/boards.md), [future ideas](docs/future.md)
 - `test/` — host checks (`make test`, `make test-native`); does not flash the board
@@ -353,7 +349,7 @@ runaway-ready state) · `WIPE` (factory reset → new game) · `BEEP` (audio tes
 `TIME <epoch>` / `RTCSET <epoch>` · `HEALTH` (uptime + heap for the soak test) ·
 `LS` / `PUT` (SD files).
 
-To test fast: lower `PET_TICK_MS`, `MINUTES_PER_LEVEL` and `FAREWELL_AGE_MIN` in `pet.h`.
+To test fast: lower `PET_TICK_MS`, `MINUTES_PER_LEVEL` and `FAREWELL_AGE_MIN` in `src/game/pet.h`.
 
 ## Roadmap
 
