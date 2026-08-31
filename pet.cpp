@@ -13,6 +13,19 @@ void Pet::begin() {
   lastTick = millis();
 }
 
+void Pet::chooseStarter(int16_t dex) {
+  eggTarget = dex;
+  starterPick = false;
+  howtoSeen = false;  // show the two-line loop card once
+  save();
+}
+
+void Pet::dismissHowto() {
+  if (howtoSeen) return;
+  howtoSeen = true;
+  save();
+}
+
 void Pet::newEgg() {
   ceremony = CER_NONE;
   neglectTicks = 0;
@@ -35,6 +48,7 @@ void Pet::newEgg() {
   careMistakes = 0;
   mistakeCooldown = 0;
   sleeping = false;
+  sick = false;
   save();
 }
 
@@ -69,12 +83,13 @@ void Pet::syncClock(uint32_t nowEpoch) {
       continue;
     }
     if (sleeping) {  // rest: drops slowly with a floor, same as live
-      energy = clamp100(energy + 6);
+      energy = clamp100(energy + SLEEP_ENERGY);
       if (ageMinutes % 2 == 0) {
         fullness = dropTo(fullness, 1, 30);
         joy = dropTo(joy, 1, 35);
       }
-      if (ageMinutes % 3 == 0) hygiene = dropTo(hygiene, 1, 45);
+      if (ageMinutes % 3 == 0) hygiene = dropTo(hygiene, 1, SLEEP_HYG_FLOOR);
+      if (hygiene < SICK_HYG) sick = true;
       continue;
     }
     fullness = dropTo(fullness, 2, 15);
@@ -124,13 +139,14 @@ void Pet::tick() {
   // or runaways). awake: food -2/min, hyg/joy -1/min.
   // Weight still burns; the well-cared streak (goodTicks) is paused.
   if (sleeping) {
-    energy = clamp100(energy + 6);
+    energy = clamp100(energy + SLEEP_ENERGY);
     if (weight > 0 && ageMinutes % 3 == 0) weight--;
     if (ageMinutes % 2 == 0) {                 // ~4x slower than awake
       fullness = dropTo(fullness, 1, 30);
       joy = dropTo(joy, 1, 35);
     }
-    if (ageMinutes % 3 == 0) hygiene = dropTo(hygiene, 1, 45);
+    if (ageMinutes % 3 == 0) hygiene = dropTo(hygiene, 1, SLEEP_HYG_FLOOR);
+    if (hygiene < SICK_HYG) sick = true;
     checkMedals();  // can still cross a level by age while asleep
     if (++ticksSinceSave >= 5) pendingSave = true;
     return;
@@ -412,7 +428,7 @@ bool Pet::canEvolveNow() const {
   if (isEgg() || sleeping || ceremony != CER_NONE) return false;
   const DexEntry &d = DEX_TBL[speciesId];
   if (d.evolvesTo == 0) return false;
-  return level() >= (uint8_t)(d.evolveLevel + careMistakes) && lowestStat() >= 40;
+  return !sick && level() >= (uint8_t)(d.evolveLevel + careMistakes) && lowestStat() >= 40;
 }
 
 void Pet::evolve() {
@@ -467,6 +483,16 @@ void Pet::feedCandy() {
   save();
 }
 
+void Pet::giveMedicine() {
+  if (ceremony != CER_NONE || isEgg() || sleeping || !sick) return;
+  sick = false;
+  joy = dropTo(joy, 8, 5);
+  energy = dropTo(energy, 5, 5);
+  eatUntil = millis() + EAT_ANIM_MS;
+  registerCare();
+  save();
+}
+
 void Pet::playResult(uint8_t score) {
   if (ceremony != CER_NONE || isEgg()) return;
   uint8_t v = trSpe + score / 5;  // playing trains speed
@@ -501,6 +527,24 @@ uint8_t Pet::trainStrength(uint16_t hits) {
   registerCare();
   save();
   return gain;
+}
+
+void Pet::walkResult(uint16_t dist) {
+  if (ceremony != CER_NONE || isEgg()) return;
+  uint8_t gain = dist / 20;
+  if (gain > 16) gain = 16;
+  uint8_t v = trSpe + gain;
+  trSpe = v > 100 ? 100 : v;
+  joy = clamp100(joy + 5 + (dist > 40 ? 20 : dist / 2));
+  energy = dropTo(energy, 10 + dist / 15, 5);
+  fullness = dropTo(fullness, 5, 5);
+  int burn = (int)weight - (int)dist / 8;
+  weight = burn > 0 ? burn : 0;
+  if (dist >= 25) heartUntil = millis() + HEART_MS;
+  if (dist > walkHi) walkHi = dist;
+  addBond(2);
+  registerCare();
+  save();
 }
 
 void Pet::play() {
@@ -549,7 +593,7 @@ void Pet::eggTap() {
 PetMood Pet::mood() const {
   if (sleeping) return MOOD_SLEEPING;
   if (eating()) return MOOD_EATING;
-  if (lowestStat() < 25) return MOOD_SAD;
+  if (sick || lowestStat() < 25) return MOOD_SAD;
   return MOOD_HAPPY;
 }
 
@@ -572,6 +616,7 @@ void Pet::save() {
   prefs.putBool("shy", shiny);
   prefs.putBool("eshy", eggShiny);
   prefs.putBool("stpk", starterPick);
+  prefs.putBool("howto", howtoSeen);
   prefs.putBytes("dexsh", dexShinyReg, sizeof(dexShinyReg));
   prefs.putUInt("age", ageMinutes);
   prefs.putShort("dexn", speciesId);
@@ -579,6 +624,7 @@ void Pet::save() {
   prefs.putUChar("crack", eggTaps);
   prefs.putUChar("mist", careMistakes);
   prefs.putBool("sleep", sleeping);
+  prefs.putBool("sick", sick);
   prefs.putUChar("lend", lastEnd);
   if (lastSeenEpoch) prefs.putUInt("seen", lastSeenEpoch);
   prefs.putBytes("dexreg", dexReg, sizeof(dexReg));
@@ -591,6 +637,7 @@ void Pet::save() {
   prefs.putUShort("mstone", lastMilestone);
   prefs.putUShort("ghi", gameHi);
   prefs.putUShort("shi", strHi);
+  prefs.putUShort("whi", walkHi);
   prefs.putString("nick", nick);
 }
 
@@ -616,6 +663,7 @@ void Pet::load() {
   shiny = prefs.getBool("shy", false);
   eggShiny = prefs.getBool("eshy", false);
   starterPick = prefs.getBool("stpk", false);
+  howtoSeen = prefs.getBool("howto", true);  // missing key: already playing
   prefs.getBytes("dexsh", dexShinyReg, sizeof(dexShinyReg));
   ageMinutes = prefs.getUInt("age", 0);
   if (prefs.isKey("dexn")) {
@@ -632,6 +680,7 @@ void Pet::load() {
   eggTaps = prefs.getUChar("crack", 0);
   careMistakes = prefs.getUChar("mist", 0);
   sleeping = prefs.getBool("sleep", false);
+  sick = prefs.getBool("sick", false);
   lastEnd = prefs.getUChar("lend", CER_NONE);
   prefs.getBytes("dexreg", dexReg, sizeof(dexReg));
   streak = prefs.getUShort("strk", 0);
@@ -643,6 +692,7 @@ void Pet::load() {
   lastMilestone = prefs.getUShort("mstone", 0);
   gameHi = prefs.getUShort("ghi", 0);
   strHi = prefs.getUShort("shi", 0);
+  walkHi = prefs.getUShort("whi", 0);
   prefs.getString("nick", nick, sizeof(nick));
   // seed: the current pet counts as raised (old saves)
   if (speciesId >= 1) registerSpecies(speciesId);

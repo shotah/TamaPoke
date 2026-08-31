@@ -36,7 +36,7 @@ struct Note { uint16_t f, ms; int16_t amp; };  // amp 0 = default 5000
 
 static const Note N_TAP[]    = {{440, 14, 2200}, {330, 16, 1600}};  // soft tick, not a chirp
 static const Note N_EAT[]    = {{660, 45}, {0, 12}, {660, 45}};
-static const Note N_PLAY[]   = {{784, 45}, {988, 60}};
+static const Note N_PLAY[]   = {{392, 14, 2400}, {523, 16, 1800}};  // bounce, not a chirp
 static const Note N_PUNCH[]  = {{280, 12}, {150, 22}};  // slap + bag thud
 static const Note N_HEART[]  = {{1047, 55}, {1319, 90}};
 static const Note N_HATCH[]  = {{523, 80}, {659, 80}, {784, 110}, {1047, 170}};

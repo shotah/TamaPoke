@@ -466,6 +466,27 @@ def icon_candy():
     return g.rows()
 
 
+def icon_med():
+    return [
+        "................",
+        ".......kk.......",
+        "......kwwk......",
+        "......kkkk......",
+        ".....krrrrk.....",
+        "....krwrrrrk....",
+        "....krrrrrrk....",
+        "....krrrrrrk....",
+        "....krrrrrRk....",
+        "....krrrrrRk....",
+        ".....krrrRk.....",
+        "......kRRk......",
+        ".......kk.......",
+        "................",
+        "................",
+        "................",
+    ]
+
+
 def icon_clean():
     g = G(16)
     g.disk(7, 10, 4.6, 4.4, 'b', 'B')
@@ -493,6 +514,7 @@ SPRITES = {
     "ICON_BERRY_B": icon_berry_blue(),
     "ICON_BERRY_G": icon_berry_green(),
     "ICON_CANDY": icon_candy(),
+    "ICON_MED": icon_med(),
     "EGG": egg(),
     "POOP": poop(),
     "HEART": heart(),

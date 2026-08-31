@@ -1,6 +1,7 @@
 #include "minitest.h"
 #include "dex.h"
 #include "pet.h"
+#include "i18n.h"
 #include "boards/lcd_185c/pins.h"
 
 // pin_config.h cannot be included here: it pulls the panel/touch HAL.
@@ -62,6 +63,11 @@ void test_pet_inline_rules() {
   TEST_ASSERT_FALSE(p.isEgg());
   TEST_ASSERT_TRUE(p.lovesBerry(4 % 3));
   TEST_ASSERT_FALSE(p.lovesBerry(0));
+  p.speciesId = 3;  // Venusaur
+  TEST_ASSERT_TRUE(p.lovesBerry(0));
+  TEST_ASSERT_FALSE(p.lovesBerry(1));
+  p.speciesId = 1;  // Bulbasaur
+  TEST_ASSERT_TRUE(p.lovesBerry(1));
 
   p.ageMinutes = 0;
   TEST_ASSERT_EQUAL(1, p.level());
@@ -69,6 +75,8 @@ void test_pet_inline_rules() {
   TEST_ASSERT_EQUAL(2, p.level());
   p.ageMinutes = 59;
   TEST_ASSERT_EQUAL(1, p.level());
+  p.ageMinutes = MINUTES_PER_LEVEL * 15;
+  TEST_ASSERT_EQUAL(16, p.level());
 
   p.fullness = 10;
   p.joy = 40;
@@ -81,12 +89,28 @@ void test_pet_inline_rules() {
   TEST_ASSERT_TRUE(p.isRegistered(4));
   TEST_ASSERT_FALSE(p.isRegistered(0));
   TEST_ASSERT_FALSE(p.isRegistered(152));
+  p.dexReg[18] = 1 << 6;  // dex 151: byte (150>>3)=18, bit (150&7)=6
+  TEST_ASSERT_TRUE(p.isRegistered(151));
+}
+
+void test_sleep_sick_constants() {
+  TEST_ASSERT_EQUAL(10, SLEEP_ENERGY);
+  TEST_ASSERT_EQUAL(20, SLEEP_HYG_FLOOR);
+  TEST_ASSERT_EQUAL(35, SICK_HYG);
+  TEST_ASSERT_LESS_THAN(SICK_HYG, SLEEP_HYG_FLOOR);
+  TEST_ASSERT_EQUAL(60, MINUTES_PER_LEVEL);
+  TEST_ASSERT_EQUAL(8, MED_COUNT);
+  TEST_ASSERT_EQUAL(3UL * 24 * 60, FAREWELL_AGE_MIN);
+  TEST_ASSERT_EQUAL(60, RUNAWAY_TICKS);
 }
 
 void test_i18n_ids() {
-  TEST_ASSERT_EQUAL(6, LANG_COUNT);
+  TEST_ASSERT_EQUAL(8, LANG_COUNT);
   TEST_ASSERT_EQUAL(LANG_EN, LANG_DEFAULT);
-  TEST_ASSERT_TRUE(STR_COUNT > 0);
+  TEST_ASSERT_EQUAL(6, LANG_JA);
+  TEST_ASSERT_EQUAL(7, LANG_ZH);
+  TEST_ASSERT_EQUAL(STR_COUNT - 1, S_SICK);
+  TEST_ASSERT_TRUE(S_EXIT < S_SICK);
 }
 
 int main() {
@@ -96,6 +120,7 @@ int main() {
   RUN_TEST(test_evo_targets_in_range);
   RUN_TEST(test_lcd_185c_scale);
   RUN_TEST(test_pet_inline_rules);
+  RUN_TEST(test_sleep_sick_constants);
   RUN_TEST(test_i18n_ids);
   return mt_end();
 }

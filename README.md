@@ -78,8 +78,10 @@ While **awake**, per minute:
 - 🥊 **Training bag:** trains **STRENGTH** (~4 hits = 1 pt, cap +18/session), tires it.
 - 🫧 **Bath:** clears poops, HYG → 100.
 - 👆 **Pet it:** +5 JOY + bond.
-- 🌙 **Sleep:** rest — ENE **+6/min**, needs drain ~**4× slower** with floors
-  (FOOD 30 / JOY 35 / HYG 45). No poops, no slip-ups, can't run away while asleep.
+- 🌙 **Sleep:** rest — ENE **+10/min**, needs drain ~**4× slower** with floors
+  (FOOD 30 / JOY 35 / HYG 20). No poops, no slip-ups, can't run away while asleep.
+  If HYG falls below **35** in the nap, it wakes **sick** (Hurt). Food tray has a
+  medicine bottle: cures sick, small JOY/ENE cost. A bath does not.
 
 ### Eggs & who you get (spawn odds)
 - **First ever pet:** you pick a starter — **Bulbasaur / Charmander / Squirtle**.
@@ -206,7 +208,8 @@ If one bottoms out it counts as a *slip-up*.
 
 **Buttons (bottom arc, icons):**
 - 🍎 **Feed** → food menu: 3 berries (each species has a hidden favourite that
-  gives a bonus) and a candy (+happiness but it fattens; weight makes it sluggish).
+  gives a bonus), a candy (+happiness but it fattens), and medicine (only while
+  sick).
 - ⚽ **Play** → the pokeball minigame (trains SPEED).
 - 🌙 **Light** → sleep/wake (recovers energy, dims the screen). While asleep,
   needs decay much slower (rest).
@@ -305,11 +308,12 @@ The egg rolls rarity over the ~79 base forms (47 common / 27 rare / 5 legendary)
 a farewell and punished by a runaway. Legendaries only with 25+ registered.
 **Shiny** 1/48 (better with streak/bond/farewell).
 
-**Languages:** the UI ships in 6 languages — English (default), Spanish, French,
-German, Italian, Portuguese — switchable from the settings screen (swipe down).
+**Languages:** the UI ships in 8 languages — English (default), Spanish, French,
+German, Italian, Portuguese, Japanese, Chinese — switchable from the settings
+screen (swipe down). The firmware font is ASCII-only, so Japanese and Chinese
+are **romaji / pinyin** (same reason Spanish has no accents).
 **Pokémon names are localized too**: French and German show the official names
-(Bulbizarre, Bisasam...); the other languages use the English ones, which is what
-those regions officially use for gen 1.
+(Bulbizarre, Bisasam...); the other languages use the English ones.
 
 ## Backgrounds: biome + real time
 
@@ -319,18 +323,19 @@ beach, forest, volcano, mountain, snow). Sleeping forces night.
 
 ## Layout
 
-- `TamaPoke.ino` — init, game loop, render of every screen, gestures, serial console, audio
+- `TamaPoke.ino` — init, game loop, home/scene, minigames, gestures, serial console
+- `ui.h` / `ui_card.cpp` / `ui_gallery.cpp` — pet card, clock, rename keyboard, Pokédex gallery
 - `pet.h` / `pet.cpp` — pet state and logic (stats, evolution, life cycle, streak/bond/medals, NVS)
 - `sdmon.h` / `sdmon.cpp` — TPK1 (animated) and TPK2 (PMD) sprites + thumbnails, and file reception over USB (PUT/LS)
 - `rtcbat.h` / `rtcbat.cpp` — PCF85063 RTC + AXP2101 PMU (battery, brightness, PWR button)
 - `audio.h` / `audio.cpp` — ES8311 + I2S + Game-Boy-style tone synth (non-blocking task)
-- `i18n.h` / `i18n.cpp` — the 6-language string tables
+- `i18n.h` / `i18n.cpp` — the 8-language string tables
 - `dex.h` — GENERATED (`gen_dex.py`): the 151 table
 - `species.h` — GENERATED (`sprites.py`): fallback sprites, UI icons, colours
 - `hw/board.h` / `board.cpp` — I2C, QSPI canvas, touch IRQ wiring
 - `pin_config.h` — includes `boards/<TAMAPOKE_BOARD_DIR>/` (`pins`, `audio`, `display`, `touch`, `power`, `expander_impl`)
 - `boards/` — per-device HAL + PlatformIO JSON; see [docs/boards.md](docs/boards.md)
-- `docs/` — [architecture](docs/architecture.md) and [adding a board](docs/boards.md)
+- `docs/` — [architecture](docs/architecture.md), [adding a board](docs/boards.md), [future ideas](docs/future.md)
 - `test/` — host checks (`make test`, `make test-native`); does not flash the board
 - `tools/` — pipeline: `dex_data.py` (data), `dex_stats.py`, `dex_names.py` +
   `gen_names.py` (localized names), `gen_dex.py`,

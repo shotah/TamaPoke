@@ -1,9 +1,12 @@
 #pragma once
 #include <Arduino.h>
 
-// Supported languages. The firmware font has no accents: all texts go
-// without tildes or n-tildes (same as Spanish already did).
-enum Lang : uint8_t { LANG_ES = 0, LANG_EN, LANG_FR, LANG_DE, LANG_IT, LANG_PT, LANG_COUNT };
+// Supported languages. The firmware font is ASCII-only: no accents, and
+// Japanese / Chinese are romanized (romaji / pinyin) so they actually draw.
+enum Lang : uint8_t {
+  LANG_ES = 0, LANG_EN, LANG_FR, LANG_DE, LANG_IT, LANG_PT,
+  LANG_JA, LANG_ZH, LANG_COUNT
+};
 #define LANG_DEFAULT LANG_EN  // default language: English
 
 extern Lang gLang;  // active language (defined in i18n.cpp)
@@ -54,6 +57,11 @@ enum StrId : uint8_t {
   S_EVO_Q, S_EVO_KEEP, S_FAR_Q, S_FAR_GO, S_FAR_STAY,
   S_CHOOSE_STARTER,  // starter choice title (first time)
   S_NO_SPRITES, S_LOAD_SPRITES,  // warning when the sprite is missing from SD
+  S_DEX_HINT,        // unregistered dex detail
+  S_EGG_BLESS,       // egg screen: farewell helps the next roll
+  S_HOWTO_1, S_HOWTO_2,  // one-time card after starter
+  S_EXIT,                // minigame quit (top-center; round screen has no corners)
+  S_SICK,                // dirty nap; medicine in the food tray
   STR_COUNT
 };
 

@@ -7,8 +7,9 @@ round 466×466 layout. **Hardware** is swapped at compile time: one folder under
 ```
                     ┌─────────────────────────────────────┐
                     │           TamaPoke.ino              │
-                    │  loop, UI, pets, minigames, i18n    │
+                    │  loop, home, minigames, gestures    │
                     │  coords via SX()/SY() and PET_SCALE │
+                    │  ui_card.cpp + ui_gallery.cpp       │
                     └──────────────┬──────────────────────┘
                                    │
               gfx, boardTouchGet, boardSetBrightness, audio
@@ -34,7 +35,7 @@ round 466×466 layout. **Hardware** is swapped at compile time: one folder under
 
 | Layer | Files | Rule |
 |---|---|---|
-| Game | `TamaPoke.ino`, `pet.*`, `i18n.*`, `dex.h`, `species.h` | No chip names, no GPIO numbers. Draw at 466 and scale. |
+| Game | `TamaPoke.ino`, `ui.h` / `ui_card.cpp` / `ui_gallery.cpp`, `pet.*`, `i18n.*`, `dex.h`, `species.h` | No chip names, no GPIO numbers. Draw at 466 and scale. |
 | Services | `audio.cpp`, `sdmon.cpp`, `rtcbat.cpp` | Use macros/functions from the selected board profile. |
 | Board HAL | `board.cpp`, `hw/board.h` | Wire, panel canvas, touch IRQ wiring. Calls into `boards/<id>/`. |
 | Board profile | `boards/<dir>/{pins,audio,display,touch,power,expander_impl}.h` | The only place a new panel, codec, or PMU is allowed. |

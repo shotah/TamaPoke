@@ -5,6 +5,9 @@
 // 1 tick = 1 minute of play. Lower this to test faster
 // (e.g. 5000UL = stats drop 12x faster).
 #define PET_TICK_MS 60000UL
+#define SLEEP_ENERGY 10  // ENE per minute asleep (live and offline)
+#define SLEEP_HYG_FLOOR 20  // HYG can fall far enough to get sick
+#define SICK_HYG 35         // asleep + HYG below this → sick
 // Minutes of play per level. At 60, CHARMANDER evolves after ~16 h
 // of play with perfect care. Lower to 1 to see evolutions immediately.
 #define MINUTES_PER_LEVEL 60
@@ -47,6 +50,7 @@ public:
   int16_t prevSpeciesId = -1;  // for the evolution animation
   uint8_t careMistakes = 0;   // neglect: each delays evolution by 1 level
   bool sleeping = false;
+  bool sick = false;      // dirty nap: Hurt until medicine
   uint32_t lastSeenEpoch = 0;   // last RTC time seen (for offline progression)
   uint8_t ceremony = CER_NONE;  // farewell/runaway/release in progress
   uint8_t lastEnd = CER_NONE;   // how the previous one ended (affects the egg)
@@ -64,6 +68,7 @@ public:
   uint16_t lastMilestone = 0;  // streak milestone already celebrated
   uint16_t gameHi = 0;     // minigame high score (player)
   uint16_t strHi = 0;      // punching-bag hit record
+  uint16_t walkHi = 0;     // walk-runner distance record
 
   void begin();                 // load state from NVS (or create the first egg)
   void update(uint32_t nowMs);  // call every loop()
@@ -72,11 +77,13 @@ public:
   void feed();              // red berry (compat)
   void feedBerry(uint8_t color);  // 0 red, 1 blue, 2 green
   void feedCandy();
+  void giveMedicine();    // cures sick; deny no-ops if healthy
   bool lovesBerry(uint8_t color) const {
     return !isEgg() && (speciesId % 3) == color;  // hidden taste by species
   }
   void playResult(uint8_t score);  // minigame reward (trains SPE)
   uint8_t trainStrength(uint16_t hits);  // punching bag (trains ATK)
+  void walkResult(uint16_t dist);  // walk runner (trains SPE, burns weight)
 
   // combat stats: real gen 1 base x genes + level + training
   uint16_t atkStat() const;
@@ -115,9 +122,12 @@ public:
   void declineFarewell() { farDeclinedAge = ageMinutes + 1440; } // re-offers in 1 day
   // first play: player chooses starter (Bulbasaur/Charmander/Squirtle)
   bool awaitingStarter() const { return starterPick; }
-  void chooseStarter(int16_t dex) { eggTarget = dex; starterPick = false; save(); }
+  void chooseStarter(int16_t dex);
+  bool showHowto() const { return !howtoSeen && !starterPick; }
+  void dismissHowto();
   void factoryReset() { prefs.clear(); }  // clears NVS (test: serial command WIPE)
   void dbgRunawayReady() { fullness = joy = energy = hygiene = 0; neglectTicks = RUNAWAY_TICKS; }  // test
+  void dbgSick() { sick = true; hygiene = 20; }
   uint8_t level() const { return 1 + ageMinutes / MINUTES_PER_LEVEL; }
   bool isRegistered(int16_t dex) const {
     return dex >= 1 && dex <= 151 && (dexReg[(dex - 1) >> 3] & (1 << ((dex - 1) & 7)));
@@ -167,6 +177,7 @@ private:
   uint8_t evoDeclinedLv = 0;    // "keep form": do not offer evolution until level up
   uint32_t farDeclinedAge = 0;  // "stay together": do not offer farewell until this age
   bool starterPick = false;     // first play: waiting for the player to choose a starter
+  bool howtoSeen = true;        // one-time loop card; default true so old saves skip it
   uint8_t neglectTicks = 0;
   uint16_t goodTicks = 0;  // well-cared streak: forges DEF
   uint32_t ceremonyUntil = 0;

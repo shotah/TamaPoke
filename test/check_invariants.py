@@ -63,12 +63,51 @@ def test_amoled_175() -> None:
     print("ok  layout amoled_175")
 
 
+def _fmt_tokens(s: str) -> list[str]:
+    return re.findall(r"%(?:[-+ #0-9.]*)(?:l|ll)?[udiscxX]|%%", s)
+
+
 def test_i18n() -> None:
-    text = (ROOT / "i18n.h").read_text()
-    if "LANG_DEFAULT LANG_EN" not in text:
+    header = (ROOT / "i18n.h").read_text()
+    if "LANG_DEFAULT LANG_EN" not in header:
         fail("LANG_DEFAULT should be LANG_EN")
-    if "LANG_COUNT" not in text:
-        fail("LANG_COUNT missing")
+    if "LANG_JA" not in header or "LANG_ZH" not in header:
+        fail("LANG_JA / LANG_ZH missing from i18n.h")
+    for sid in ("S_DEX_HINT", "S_EGG_BLESS", "S_HOWTO_1", "S_HOWTO_2", "S_EXIT", "S_SICK"):
+        if sid not in header:
+            fail(f"{sid} missing from i18n.h")
+
+    cpp = (ROOT / "i18n.cpp").read_text()
+    start = cpp.find("STRINGS[")
+    end = cpp.find("};", start)
+    if start < 0 or end < 0:
+        fail("STRINGS table missing")
+    blocks = re.split(r"// -{5,}", cpp[start:end])[1:]
+    if len(blocks) != 8:
+        fail(f"STRINGS should have 8 language blocks, got {len(blocks)}")
+    langs: list[list[str]] = []
+    for i, block in enumerate(blocks):
+        rows = re.findall(r'"((?:\\.|[^"\\])*)"', block)
+        langs.append(rows)
+        if any(ord(c) > 127 for s in rows for c in s):
+            fail(f"language {i} has a non-ASCII byte (font is ASCII-only)")
+    n = len(langs[0])
+    if n < 80:
+        fail(f"STRINGS too short: {n}")
+    for i, rows in enumerate(langs):
+        if len(rows) != n:
+            fail(f"language {i} has {len(rows)} strings, EN has {n}")
+    for i in range(n):
+        want = _fmt_tokens(langs[1][i])  # EN
+        if not want:
+            continue
+        for li, rows in enumerate(langs):
+            if _fmt_tokens(rows[i]) != want:
+                fail(f"lang {li} string {i} format { _fmt_tokens(rows[i]) } != EN {want}")
+
+    card = (ROOT / "ui_card.cpp").read_text()
+    if '"JA"' not in card or '"ZH"' not in card:
+        fail("language pill missing JA/ZH")
     print("ok  i18n")
 
 
@@ -76,7 +115,62 @@ def test_berry_rule() -> None:
     # Pet::lovesBerry: speciesId % 3 == color
     if 4 % 3 != 1:
         fail("Charmander favorite should be color 1 (blue)")
+    if 3 % 3 != 0:
+        fail("Venusaur favorite should be color 0 (red)")
     print("ok  berry rule")
+
+
+def test_sleep_sick() -> None:
+    pet_h = (ROOT / "pet.h").read_text()
+    energy = int(re.search(r"#define SLEEP_ENERGY (\d+)", pet_h).group(1))
+    floor = int(re.search(r"#define SLEEP_HYG_FLOOR (\d+)", pet_h).group(1))
+    sick = int(re.search(r"#define SICK_HYG (\d+)", pet_h).group(1))
+    if energy < 6:
+        fail(f"SLEEP_ENERGY {energy} is slower than the old +6")
+    if not (floor < sick):
+        fail(f"SLEEP_HYG_FLOOR {floor} must be below SICK_HYG {sick}")
+    ino = (ROOT / "TamaPoke.ino").read_text()
+    if "giveMedicine" not in ino or "SPR_ICON_MED" not in ino:
+        fail("food tray should offer medicine")
+    if "pet.dbgSick" not in ino:
+        fail("serial SICK helper missing")
+    if "SPR_ICON_MED" not in (ROOT / "species.h").read_text():
+        fail("SPR_ICON_MED missing from species.h")
+    print("ok  sleep/sick")
+
+
+def test_walk_gaps() -> None:
+    ino = (ROOT / "TamaPoke.ino").read_text()
+
+    def sy_or_sx(name: str) -> int:
+        m = re.search(rf"#define {name} S[XY]\((\d+)\)", ino)
+        if not m:
+            fail(f"{name} missing")
+        return int(m.group(1))
+
+    lo = sy_or_sx("WALK_HOP_PEAK_LO")
+    hi = sy_or_sx("WALK_HOP_PEAK_HI")
+    single = sy_or_sx("WALK_GAP_SINGLE")
+    double = sy_or_sx("WALK_GAP_DOUBLE")
+    if lo >= hi:
+        fail(f"hold hop {hi} should be taller than tap {lo}")
+    if single <= 80:
+        fail(f"WALK_GAP_SINGLE {single} is still a one-jump trap")
+    if double > 20:
+        fail(f"WALK_GAP_DOUBLE {double} is too wide for _XX_")
+    if "walkNextPair" not in ino:
+        fail("walk doubles need walkNextPair")
+    alt = sy_or_sx("WALK_BIRD_ALT")
+    mid = sy_or_sx("WALK_BIRD_ALT_MID")
+    hi = sy_or_sx("WALK_BIRD_ALT_HI")
+    body = sy_or_sx("WALK_HIT_H")
+    if alt <= body:
+        fail(f"bird alt {alt} must sit above standing body {body}")
+    if not (alt < mid < hi):
+        fail(f"bird lanes {alt} < {mid} < {hi}")
+    if "WALK_BIRD_AFTER" not in ino:
+        fail("birds should wait for a score gate")
+    print("ok  walk gaps")
 
 
 def main() -> None:
@@ -85,6 +179,8 @@ def main() -> None:
     test_amoled_175()
     test_i18n()
     test_berry_rule()
+    test_sleep_sick()
+    test_walk_gaps()
     print("all invariants passed")
 
 
