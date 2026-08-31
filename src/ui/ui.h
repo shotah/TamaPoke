@@ -70,7 +70,7 @@ extern char nameBuf[12];
 extern uint8_t nameLen;
 extern int clockH, clockM;
 
-extern bool gameOpen, sackOpen, walkOpen;
+extern bool gameOpen, sackOpen, walkOpen, braceOpen;
 extern uint32_t feedMenuUntil, gameMenuUntil;
 extern uint32_t confirmUntil, choiceUntil;
 extern uint8_t choiceKind;
@@ -89,7 +89,7 @@ uint32_t pmdActTotalMs(const PmdAct &a);
 
 void drawPmdAct(uint8_t actId, int cx, int groundY, uint32_t t, bool loop, bool sil, uint8_t maxS);
 void drawPmdActM(PmdMon &m, uint8_t actId, int cx, int groundY, uint32_t t, bool loop, bool sil, uint8_t maxS);
-void drawMap(const char *const *map, int n, int x, int y, int s, bool silhouette);
+void drawMap(const char *const *map, int n, int x, int y, int s, bool silhouette, bool flip = false);
 void drawThumb(const uint8_t *b, int x, int y, int s, bool sil);
 void drawScene(uint8_t biome, uint32_t now, bool night);
 void drawGameScene();
@@ -114,6 +114,8 @@ void renderSack();
 void startWalk();
 void walkTryHop();
 void renderWalk();
+void startBrace();
+void renderBrace();
 bool inGameExit(int16_t x, int16_t y);
 bool gamesTouch(bool pressed, bool rising, int16_t x, int16_t y);
 bool gamesBusy();

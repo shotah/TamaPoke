@@ -168,6 +168,8 @@ def test_walk_gaps() -> None:
         fail(f"WALK_GAP_DOUBLE {double} is too wide for _XX_")
     if "walkNextPair" not in src:
         fail("walk doubles need walkNextPair")
+    if "startBrace" not in src or "trainDefense" not in src:
+        fail("brace DEF game missing")
     alt = sy_or_sx("WALK_BIRD_ALT")
     mid = sy_or_sx("WALK_BIRD_ALT_MID")
     hi = sy_or_sx("WALK_BIRD_ALT_HI")

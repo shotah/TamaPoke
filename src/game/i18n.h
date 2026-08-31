@@ -62,6 +62,7 @@ enum StrId : uint8_t {
   S_HOWTO_1, S_HOWTO_2,  // one-time card after starter
   S_EXIT,                // minigame quit (top-center; round screen has no corners)
   S_SICK,                // dirty nap; medicine in the food tray
+  S_DEF_GAIN_FMT,        // brace result: "DEF +%u"
   STR_COUNT
 };
 

@@ -50,12 +50,43 @@ uint32_t hopT0 = 0, hopStepMs = 0, walkJumpBuf = 0;
 bool walkNextPair = false;        // next recycle is the twin of a double
 struct WalkHaz { float x; uint8_t w, h, kind, alt; } walkHaz[3];  // kind 0 lump, 1 bird
 
+// brace: glove from left or right. tap the matching button when it flashes.
+#define BRACE_MS 18000UL
+#define BRACE_MISS_MAX 3
+#define BRACE_PET_Y SY(318)
+#define BRACE_BTN_W SX(150)
+#define BRACE_BTN_H SY(70)
+#define BRACE_BTN_Y SY(372)
+#define BRACE_BTN_L SX(48)
+#define BRACE_BTN_R (CX + SX(34))
+enum : uint8_t { BR_WIND = 0, BR_OK, BR_MISS, BR_GAP };
+bool braceOpen = false;
+uint32_t braceUntil = 0, braceOverUntil = 0, punchT0 = 0, braceStateUntil = 0, bracePetT0 = 0;
+uint16_t braceScore = 0, punchDur = 0;
+uint8_t braceMisses = 0, braceGain = 0, braceState = BR_WIND, bracePetAct = 0;
+bool braceNewHi = false, braceLeft = false, braceTold = false;
+
 void respawnBall();
 void drawGameExitCloud(uint16_t ink);
+void braceTap(int16_t x, int16_t y);
+void braceSpawn();
+void braceFinish();
 
-bool gamesBusy() { return gameOpen || sackOpen || walkOpen; }
+bool gamesBusy() { return gameOpen || sackOpen || walkOpen || braceOpen; }
 
 bool gamesTouch(bool pressed, bool rising, int16_t x, int16_t y) {
+  if (braceOpen) {
+    if (rising) {
+      if (braceOverUntil) { /* result screen */ }
+      else if (inGameExit(x, y)) {
+        braceOpen = false;
+        sfxPlay(SFX_BACK);
+      } else {
+        braceTap(x, y);
+      }
+    }
+    return true;
+  }
   if (walkOpen) {
     if (rising) {
       if (walkOverUntil) { /* result screen */ }
@@ -568,4 +599,210 @@ void drawGameExitCloud(uint16_t ink) {
   gfx->fillCircle(ecx, ecy - SY(10), SY(32), UI_WHITE);
   uiColor(UI_INK);
   printCx(2, ecy - SY(10), T(S_EXIT));
+}
+
+// ---------- brace (trains defense) ----------
+
+void braceSpawn() {
+  braceLeft = random(2);
+  int dur = 1600 - (int)braceScore * 40;
+  if (dur < 900) dur = 900;
+  if (braceScore >= 5 && random(100) < 18) dur = 980;  // jab, still readable
+  punchDur = (uint16_t)dur;
+  punchT0 = millis();
+  braceTold = false;
+  braceState = BR_WIND;
+}
+
+void startBrace() {
+  if (pet.isEgg() || pet.sleeping || pet.ceremony) return;
+  braceOpen = true;
+  braceUntil = millis() + BRACE_MS;
+  braceOverUntil = 0;
+  braceScore = 0;
+  braceMisses = 0;
+  braceGain = 0;
+  braceNewHi = false;
+  bracePetAct = PMD_IDLE;
+  bracePetT0 = millis();
+  braceSpawn();
+}
+
+void braceFinish() {
+  braceNewHi = (braceScore > pet.braceHi);
+  braceGain = pet.trainDefense(braceScore);
+  sfxPlay(braceNewHi && braceScore > 0 ? SFX_MEDAL : SFX_LEVEL);
+  braceOverUntil = millis() + 3500;
+}
+
+static void braceResolve(bool ok) {
+  uint32_t now = millis();
+  if (ok) {
+    braceScore++;
+    braceState = BR_OK;
+    braceStateUntil = now + 280;
+    bracePetAct = pmd.has(PMD_ATTACK) ? PMD_ATTACK : PMD_IDLE;
+    bracePetT0 = now;
+    sfxPlay(SFX_PUNCH);
+  } else {
+    braceMisses++;
+    braceState = BR_MISS;
+    braceStateUntil = now + 420;
+    bracePetAct = pmd.has(PMD_HURT) ? PMD_HURT : PMD_IDLE;
+    bracePetT0 = now;
+    sfxPlay(SFX_DENY);
+  }
+}
+
+static void braceGloveBox(float t, int *x, int *y, int *sz) {
+  if (t < 0) t = 0;
+  if (t > 1) t = 1;
+  int sc = 2 + (int)(t * 4.f + 0.5f);
+  if (sc > 6) sc = 6;
+  int span = SX(148) - (int)(t * SX(98));
+  *sz = 16 * sc;
+  *y = SY(248) - *sz / 2;
+  *x = braceLeft ? (CX - span - *sz) : (CX + span);
+}
+
+static bool braceHitBtn(int16_t x, int16_t y, bool left) {
+  int bx = left ? BRACE_BTN_L : BRACE_BTN_R;
+  return x >= bx && x < bx + BRACE_BTN_W &&
+         y >= BRACE_BTN_Y && y < BRACE_BTN_Y + BRACE_BTN_H;
+}
+
+void braceTap(int16_t x, int16_t y) {
+  if (braceOverUntil || braceState != BR_WIND) return;
+  bool hitL = braceHitBtn(x, y, true);
+  bool hitR = braceHitBtn(x, y, false);
+  if (!hitL && !hitR) return;
+  uint32_t now = millis();
+  uint32_t elapsed = now - punchT0;
+  float t = punchDur ? (float)elapsed / (float)punchDur : 1.f;
+  if (t < 0.50f) return;  // still coming: wait, do not Hurt
+  if (elapsed > (uint32_t)punchDur + 160) return;
+  braceResolve(hitL == braceLeft);
+}
+
+static void drawBraceBtns(uint16_t ink, bool hot) {
+  for (int i = 0; i < 2; i++) {
+    bool left = (i == 0);
+    int bx = left ? BRACE_BTN_L : BRACE_BTN_R;
+    bool lit = hot && (left == braceLeft);
+    gfx->fillRoundRect(bx, BRACE_BTN_Y, BRACE_BTN_W, BRACE_BTN_H, 14,
+                       lit ? UI_BAR_WARN : UI_WHITE);
+    gfx->drawRoundRect(bx, BRACE_BTN_Y, BRACE_BTN_W, BRACE_BTN_H, 14, ink);
+    int ix = bx + (BRACE_BTN_W - 32) / 2;
+    int iy = BRACE_BTN_Y + (BRACE_BTN_H - 32) / 2;
+    drawMap(SPR_ICON_GLOVE, 16, ix, iy, 2, false, !left);
+  }
+}
+
+static void drawBraceGlove(float t, bool hot) {
+  int gx, gy, sz;
+  braceGloveBox(t, &gx, &gy, &sz);
+  int sc = sz / 16;
+  if (hot) {
+    int cxg = gx + sz / 2, cyg = gy + sz / 2;
+    gfx->fillCircle(cxg, cyg, sz / 2 + SX(10), UI_BAR_WARN);
+    gfx->fillCircle(cxg, cyg, sz / 2 + SX(4), UI_WHITE);
+  }
+  drawMap(SPR_ICON_GLOVE, 16, gx, gy, sc, false, !braceLeft);
+}
+
+void renderBrace() {
+  uint32_t now = millis();
+  bool night = sceneHour() < 6 || sceneHour() >= 20;
+  uint16_t ink = night ? UI_INK_NIGHT : UI_INK;
+
+  if (braceOverUntil) {
+    drawGameScene();
+    if (now > braceOverUntil) { braceOpen = false; return; }
+    if (pmd.loaded)
+      drawPmdAct(bracePetAct, CX, BRACE_PET_Y, now - bracePetT0, true, false, 3);
+    char buf[22];
+    snprintf(buf, sizeof(buf), T(S_SCORE_FMT), braceScore);
+    uiColor(ink);
+    printCx(3, SY(140), buf);
+    char g[18];
+    snprintf(g, sizeof(g), T(S_DEF_GAIN_FMT), braceGain);
+    uiColor(0x4C98);
+    printCx(2, SY(196), g);
+    if (braceNewHi && braceScore > 0) {
+      uiColor(UI_BAR_WARN);
+      printCx(2, SY(246), T(S_NEW_RECORD));
+    } else {
+      char rec[20];
+      snprintf(rec, sizeof(rec), T(S_RECORD_FMT), pet.braceHi);
+      uiColor(ink);
+      printCx(2, SY(246), rec);
+    }
+    drawGameExitCloud(ink);
+    gfx->flush();
+    return;
+  }
+
+  drawGameScene();
+
+  if (braceState == BR_WIND && now - punchT0 >= (uint32_t)punchDur + 160)
+    braceResolve(false);
+
+  if ((braceState == BR_OK || braceState == BR_MISS) && now >= braceStateUntil) {
+    if (braceMisses >= BRACE_MISS_MAX || now >= braceUntil) {
+      braceFinish();
+    } else {
+      braceState = BR_GAP;
+      braceStateUntil = now + 180;
+      bracePetAct = PMD_IDLE;
+      bracePetT0 = now;
+    }
+  }
+  if (braceState == BR_GAP && now >= braceStateUntil) {
+    if (now >= braceUntil) braceFinish();
+    else braceSpawn();
+  }
+
+  float t = 1.f;
+  if (braceState == BR_WIND && punchDur)
+    t = (float)(now - punchT0) / (float)punchDur;
+  else if (braceState == BR_OK)
+    t = 0.88f;
+  bool hot = (braceState == BR_WIND && t >= 0.50f && t <= 1.08f);
+  if (hot && !braceTold) {
+    braceTold = true;
+    sfxPlay(SFX_PLAY);
+  }
+  if (braceState == BR_WIND || braceState == BR_OK) drawBraceGlove(t, hot);
+
+  if (pmd.loaded)
+    drawPmdAct(bracePetAct, CX, BRACE_PET_Y, now - bracePetT0,
+               bracePetAct == PMD_IDLE, false, 3);
+  else if (mon.loaded) {
+    int s = (mon.h * 2 > 130) ? 1 : 2;
+    int w = mon.w * s, h = mon.h * s;
+    uint16_t fm = mon.frameMs ? mon.frameMs : 100;
+    uint16_t fi = (millis() / fm) % mon.frames;
+    const uint8_t *fr = mon.data + (uint32_t)fi * mon.w * mon.h;
+    int px = CX - w / 2, py = BRACE_PET_Y - h;
+    for (int r = 0; r < mon.h; r++)
+      for (int c = 0; c < mon.w; c++) {
+        uint8_t idx = fr[r * mon.w + c];
+        if (idx == 0xFF) continue;
+        gfx->fillRect(px + c * s, py + r * s, s, s, mon.pal[idx]);
+      }
+  }
+
+  char buf[8];
+  snprintf(buf, sizeof(buf), "%u", braceScore);
+  uiColor(ink);
+  printCx(3, SY(108), buf);
+  for (int i = 0; i < BRACE_MISS_MAX; i++) {
+    int lx = SX(180) + i * SX(28);
+    if (i < BRACE_MISS_MAX - braceMisses) gfx->fillCircle(lx, SY(176), 6, UI_BAR_OK);
+    else gfx->drawCircle(lx, SY(176), 6, UI_TRACK);
+  }
+
+  drawBraceBtns(ink, hot);
+  drawGameExitCloud(ink);
+  gfx->flush();
 }

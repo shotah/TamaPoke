@@ -41,6 +41,7 @@ static const char *const STRINGS[LANG_COUNT][STR_COUNT] = {
     "Luego llega otro huevo.",
     "SALIR",
     "Esta enfermo!",
+    "DEF +%u",
   },
   // ---------------- EN ----------------
   {
@@ -76,6 +77,7 @@ static const char *const STRINGS[LANG_COUNT][STR_COUNT] = {
     "A new egg comes next.",
     "EXIT",
     "It's sick!",
+    "DEF +%u",
   },
   // ---------------- FR ----------------
   {
@@ -111,6 +113,7 @@ static const char *const STRINGS[LANG_COUNT][STR_COUNT] = {
     "Un nouvel oeuf suit.",
     "SORTIR",
     "Il est malade!",
+    "DEF +%u",
   },
   // ---------------- DE ----------------
   {
@@ -146,6 +149,7 @@ static const char *const STRINGS[LANG_COUNT][STR_COUNT] = {
     "Dann kommt ein neues Ei.",
     "RAUS",
     "Es ist krank!",
+    "DEF +%u",
   },
   // ---------------- IT ----------------
   {
@@ -181,6 +185,7 @@ static const char *const STRINGS[LANG_COUNT][STR_COUNT] = {
     "Poi arriva un altro uovo.",
     "ESCI",
     "E' malato!",
+    "DEF +%u",
   },
   // ---------------- PT ----------------
   {
@@ -216,6 +221,7 @@ static const char *const STRINGS[LANG_COUNT][STR_COUNT] = {
     "Depois vem outro ovo.",
     "SAIR",
     "Esta doente!",
+    "DEF +%u",
   },
   // ---------------- JA ----------------
   {
@@ -251,6 +257,7 @@ static const char *const STRINGS[LANG_COUNT][STR_COUNT] = {
     "つぎは新しいタマゴ。",
     "でる",
     "びょうき!",
+    "DEF +%u",
   },
   // ---------------- ZH ----------------
   {
@@ -286,6 +293,7 @@ static const char *const STRINGS[LANG_COUNT][STR_COUNT] = {
     "接着是新蛋。",
     "退出",
     "生病了!",
+    "DEF +%u",
   },
 };
 

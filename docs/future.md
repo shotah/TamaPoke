@@ -24,7 +24,7 @@ We have the ball (SPEED) and the bag (STRENGTH). DEFENSE is still “be good for
 | Idea | Trains | Why it fits |
 |---|---|---|
 | **Walk (runner)** | SPEED + weight + ENE | **v1 shipped** + **birds**. Tap = hop lumps; stay down for overhead birds. Same single-gap as a lone lump (never inside a hop). Berry pickup still v2. |
-| **Dodge / timing** | DEF | Tap just before a wild move. Uses packed **Hurt** + **Attack**. Different from the runner (one read, not a scroll). Closest thing to wild battle without a full combat UI. |
+| **Brace (dodge)** | DEF | **Shipped.** One glove L/R, grows in. Tap that half in the last beat. Attack / Hurt. 3 blocks → +1 trDef, session cap 8. 12 h care tick stays. |
 | **Berry hunt** | JOY + berry discovery | Optional Walk reward at milestones, not its own game. Hidden favorite flavor becomes a verb. |
 | **Rhythm nod** | bond / JOY | Tap on the **Nod** / **DeepBreath** beat. Tiny, cute, uses sheets we already play at idle. |
 | **Wild encounter** | ATK/DEF/SPD as designed | README roadmap. Resolve with those three stats + Attack/Hurt. Style still open: auto, timing, or 1-button turn. Trainer rank as endgame, not a team builder. |
@@ -84,9 +84,8 @@ Home buttons are Feed / Play / Light / Bath. Card has Train strength. Missing
 verbs that still fit four buttons (long-press, card page, or a 5th slot):
 
 - ~~**Medicine** — fifth food well. Only while sick. JOY/ENE cost.~~
-- **Walk** — third well on the Play tray (see games). Not an AFK stroll; the
-  pet already wanders on the home screen. Session cap ~20–30 s or until a hit.
-  ENE down, weight down, JOY/SPE up with score. Berry at milestones.
+- ~~**Walk** — third Play well. Berry at milestones still v2.~~
+- ~~**Brace** — fourth Play well. Glove L/R, tap that half.~~
 - **Practice** — play packed **Attack** for a few seconds. Token ATK gain, less
   than the bag, so the bag stays the real trainer.
 - **Talk / treat** — extra pet with Pose + Heart. Bond only, daily cap already

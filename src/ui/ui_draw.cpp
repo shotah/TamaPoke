@@ -83,12 +83,13 @@ void drawPmdAct(uint8_t actId, int cx, int groundY, uint32_t t, bool loop, bool 
   drawPmdActM(pmd, actId, cx, groundY, t, loop, sil, maxS);
 }
 
-void drawMap(const char *const *map, int n, int x, int y, int s, bool silhouette) {
+void drawMap(const char *const *map, int n, int x, int y, int s, bool silhouette, bool flip) {
   for (int r = 0; r < n; r++) {
     for (int c = 0; c < n; c++) {
       char ch = map[r][c];
       if (ch == '.') continue;
-      gfx->fillRect(x + c * s, y + r * s, s, s, silhouette ? INK_K : spriteColor(ch));
+      int dx = flip ? (n - 1 - c) : c;
+      gfx->fillRect(x + dx * s, y + r * s, s, s, silhouette ? INK_K : spriteColor(ch));
     }
   }
 }

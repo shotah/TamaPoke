@@ -273,7 +273,7 @@ void onSwipeV(int dir) {
 // swipe: dir +1 = to the right
 void onSwipe(int dir) {
   if (pet.showHowto() || pet.awaitingStarter()) return;
-  if (gameOpen || walkOpen || kbOpen || clockOpen) return;
+  if (gamesBusy() || kbOpen || clockOpen) return;
   if (cardOpen) {  // inside the card: switch among the 4 pages
     int p = (int)cardPage + (dir > 0 ? -1 : 1);  // left advances
     uint8_t next = p < 0 ? 0 : (p > 3 ? 3 : p);
@@ -404,7 +404,7 @@ void onTap(int16_t x, int16_t y) {
       if (item == 0) startGame();
       else if (item == 1) startSack();
       else if (item == 2) startWalk();
-      else sfxPlay(SFX_DENY);  // fourth well: not built yet
+      else if (item == 3) startBrace();
     }
     gameMenuUntil = 0;
     return;

@@ -101,6 +101,10 @@ void render() {
     renderWalk();
     return;
   }
+  if (braceOpen) {
+    renderBrace();
+    return;
+  }
   if (kbOpen) {
     renderKeyboard();
     return;
@@ -189,7 +193,7 @@ void render() {
     }
   }
 
-  // play picker: ball, bag, walk (soon), empty (soon)
+  // play picker: ball, bag, walk, brace
   if (gameMenuUntil) {
     if (millis() > gameMenuUntil) {
       gameMenuUntil = 0;
@@ -205,11 +209,8 @@ void render() {
       // walk: two footprints
       gfx->fillCircle(SX(258), SY(328), 6, inkColor());
       gfx->fillCircle(SX(274), SY(314), 5, inkColor());
-      // extra well: not built yet
-      uiColor(inkColor());
-      gfx->setTextSize(2);
-      gfx->setCursor(SX(320), SY(312));
-      gfx->print("?");
+      // brace well: boxing glove
+      drawMap(SPR_ICON_GLOVE, 16, SX(308), SY(296), 3, false);
     }
   }
 

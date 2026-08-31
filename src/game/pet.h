@@ -69,6 +69,7 @@ public:
   uint16_t gameHi = 0;     // minigame high score (player)
   uint16_t strHi = 0;      // punching-bag hit record
   uint16_t walkHi = 0;     // walk-runner distance record
+  uint16_t braceHi = 0;    // brace-block record
 
   void begin();                 // load state from NVS (or create the first egg)
   void update(uint32_t nowMs);  // call every loop()
@@ -84,6 +85,7 @@ public:
   void playResult(uint8_t score);  // minigame reward (trains SPE)
   uint8_t trainStrength(uint16_t hits);  // punching bag (trains ATK)
   void walkResult(uint16_t dist);  // walk runner (trains SPE, burns weight)
+  uint8_t trainDefense(uint16_t blocks);  // brace (trains DEF)
 
   // combat stats: real gen 1 base x genes + level + training
   uint16_t atkStat() const;

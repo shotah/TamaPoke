@@ -547,6 +547,23 @@ void Pet::walkResult(uint16_t dist) {
   save();
 }
 
+uint8_t Pet::trainDefense(uint16_t blocks) {
+  if (ceremony != CER_NONE || isEgg()) return 0;
+  uint8_t gain = blocks / 3;        // ~3 blocks = 1 training point
+  if (gain > 8) gain = 8;           // cap: the 12 h care tick still matters
+  uint8_t v = trDef + gain;
+  trDef = v > 100 ? 100 : v;
+  energy = dropTo(energy, 10, 5);
+  fullness = dropTo(fullness, 5, 5);
+  joy = clamp100(joy + 6);
+  if (blocks >= 8) heartUntil = millis() + HEART_MS;
+  if (blocks > braceHi) braceHi = blocks;
+  addBond(2);
+  registerCare();
+  save();
+  return gain;
+}
+
 void Pet::play() {
   if (ceremony != CER_NONE) return;
   if (isEgg() || sleeping) return;
@@ -638,6 +655,7 @@ void Pet::save() {
   prefs.putUShort("ghi", gameHi);
   prefs.putUShort("shi", strHi);
   prefs.putUShort("whi", walkHi);
+  prefs.putUShort("bhi", braceHi);
   prefs.putString("nick", nick);
 }
 
@@ -693,6 +711,7 @@ void Pet::load() {
   gameHi = prefs.getUShort("ghi", 0);
   strHi = prefs.getUShort("shi", 0);
   walkHi = prefs.getUShort("whi", 0);
+  braceHi = prefs.getUShort("bhi", 0);
   prefs.getString("nick", nick, sizeof(nick));
   // seed: the current pet counts as raised (old saves)
   if (speciesId >= 1) registerSpecies(speciesId);

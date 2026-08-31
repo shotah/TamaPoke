@@ -497,6 +497,29 @@ def icon_clean():
     return g.rows()
 
 
+def icon_glove():
+    # Punch from off-screen: forearm cut off at the left, cuff, fist right.
+    # Mirror for a left-hand. Col 0 is flesh (no outline) so the arm continues.
+    return [
+        "................",
+        "..........kkk...",
+        ".........krrrkk.",
+        "........krrrrrrk",
+        ".......krrwrrrRk",
+        "kkkkk.krrrrrrrRk",
+        "yyyyykkssrrrrrRk",
+        "yyyyykkswrrrrrRk",
+        "yyyyYkkssrrrrRk.",
+        "kkkkk.krrrrrrk..",
+        ".......krrrrrRk.",
+        "........kRRRkk..",
+        ".........kkk....",
+        "................",
+        "................",
+        "................",
+    ]
+
+
 SPRITES = {
     "CHARMANDER": charmander(),
     "CHARMELEON": charmeleon(),
@@ -515,6 +538,7 @@ SPRITES = {
     "ICON_BERRY_G": icon_berry_green(),
     "ICON_CANDY": icon_candy(),
     "ICON_MED": icon_med(),
+    "ICON_GLOVE": icon_glove(),
     "EGG": egg(),
     "POOP": poop(),
     "HEART": heart(),
