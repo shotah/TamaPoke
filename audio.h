@@ -7,6 +7,7 @@ enum Sfx : uint8_t {
   SFX_TAP = 0,  // tap / button
   SFX_EAT,      // eat
   SFX_PLAY,     // minigame point / hit
+  SFX_PUNCH,    // punching-bag hit
   SFX_HEART,    // like / pet
   SFX_HATCH,    // hatch
   SFX_EVOLVE,   // evolve
@@ -14,6 +15,8 @@ enum Sfx : uint8_t {
   SFX_DENY,     // action not allowed
   SFX_BYE,      // farewell
   SFX_LEVEL,    // level up
+  SFX_SWIPE,    // page / open
+  SFX_BACK,     // close / back
   SFX_COUNT
 };
 

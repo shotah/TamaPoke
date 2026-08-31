@@ -472,16 +472,17 @@ void openClock();  // prototype
 void onSwipeV(int dir) {
   if (pet.awaitingStarter()) return;  // blocked during starter pick
   if (gameOpen || galleryOpen || kbOpen || sackOpen || pet.ceremony) return;
-  if (clockOpen) { clockOpen = false; return; }
+  if (clockOpen) { clockOpen = false; sfxPlay(SFX_BACK); return; }
   if (cardOpen) {
-    if (dir < 0) cardOpen = false;  // up closes the card
+    if (dir < 0) { cardOpen = false; sfxPlay(SFX_BACK); }  // up closes the card
     return;
   }
   if (dir > 0) {                    // swipe down: set time
-    if (!confirmUntil && !feedMenuUntil) openClock();
+    if (!confirmUntil && !feedMenuUntil) { openClock(); sfxPlay(SFX_SWIPE); }
   } else if (!pet.isEgg() && !confirmUntil && !feedMenuUntil) {
     cardOpen = true;                // swipe up: card
     cardPage = 0;
+    sfxPlay(SFX_SWIPE);
   }
 }
 
@@ -491,7 +492,8 @@ void onSwipe(int dir) {
   if (gameOpen || kbOpen || clockOpen) return;
   if (cardOpen) {  // inside the card: switch among the 4 pages
     int p = (int)cardPage + (dir > 0 ? -1 : 1);  // left advances
-    cardPage = p < 0 ? 0 : (p > 3 ? 3 : p);
+    uint8_t next = p < 0 ? 0 : (p > 3 ? 3 : p);
+    if (next != cardPage) { cardPage = next; sfxPlay(SFX_SWIPE); }
     return;
   }
   if (!galleryOpen) {
@@ -500,6 +502,7 @@ void onSwipe(int dir) {
       galleryPage = 0;
       galleryDetail = 0;
       galleryDirty = true;
+      sfxPlay(SFX_SWIPE);
     }
     return;
   }
@@ -507,18 +510,21 @@ void onSwipe(int dir) {
     galleryDetail = 0;
     galleryPmd.unload();
     galleryDirty = true;
+    sfxPlay(SFX_BACK);
     return;
   }
   int np = galleryPage - dir;  // swipe left advances page
   if (np < 0) {                // back from the first page = exit
     galleryOpen = false;
     galleryPmd.unload();
+    sfxPlay(SFX_BACK);
     return;
   }
   if (np > 9) np = 9;
   if (np != galleryPage) {
     galleryPage = np;
     galleryDirty = true;
+    sfxPlay(SFX_SWIPE);
   }
 }
 
@@ -549,12 +555,14 @@ void onTap(int16_t x, int16_t y) {
   }
   if (pet.ceremony) return;  // no buttons during the farewell
   if (cardOpen) {
-    if (cardPage == 0 && y < SY(84)) openKeyboard();  // tap the name = rename
+    if (cardPage == 0 && y < SY(84)) { openKeyboard(); sfxPlay(SFX_TAP); }  // tap the name = rename
     else if (cardPage == 1 && y >= SY(300) && y <= SY(340) && x >= SX(96) && x <= SX(370)) {
       cardOpen = false;            // TRAIN STRENGTH button
       startSack();
+      sfxPlay(SFX_TAP);
     } else {
       cardOpen = false;
+      sfxPlay(SFX_BACK);
     }
     return;
   }
@@ -567,17 +575,19 @@ void onTap(int16_t x, int16_t y) {
     bool b2 = (x >= SX(93) && x <= SX(373) && y >= SY(268) && y <= SY(320));
     if (choiceKind == 1) {                 // evolve
       if (b1) { int16_t old = pet.speciesId; pet.evolve(); evoPmd.load(old, pet.shiny); }
-      else if (b2) pet.declineEvolve();
+      else if (b2) { pet.declineEvolve(); sfxPlay(SFX_BACK); }
     } else if (choiceKind == 2) {          // farewell
       if (b1) pet.startFarewell();
-      else if (b2) pet.declineFarewell();
+      else if (b2) { pet.declineFarewell(); sfxPlay(SFX_BACK); }
     }
     choiceKind = 0;
     return;
   }
   if (confirmUntil) {        // "release?" dialog: YES / NO
     if (millis() < confirmUntil && x >= SX(118) && x <= SX(218) && y >= SY(252) && y <= SY(304)) {
-      pet.release();
+      pet.release();  // SFX_BYE inside
+    } else {
+      sfxPlay(SFX_BACK);
     }
     confirmUntil = 0;
     return;
@@ -1005,6 +1015,7 @@ void sackTap() {
   if (millis() >= sackUntil) return;  // time is already up
   sackHits++;
   sackShake = 16;  // shake the bag
+  sfxPlay(SFX_PUNCH);
 }
 
 void drawGameScene();  // prototype (defined below)
@@ -1295,6 +1306,8 @@ void clockTap(int16_t x, int16_t y) {
     else if (x >= SX(170) && x < SX(228)) clockH = (clockH + 1) % 24;
     else if (x >= SX(252) && x < SX(310)) clockM = (clockM + 59) % 60;
     else if (x >= SX(318) && x < SX(376)) clockM = (clockM + 1) % 60;
+    else return;
+    sfxPlay(SFX_TAP);
     return;
   }
   if (y >= LANG_PILL_Y && y <= LANG_PILL_Y + LANG_PILL_H) {
@@ -1309,7 +1322,11 @@ void clockTap(int16_t x, int16_t y) {
       return;
     }
   }
-  if (y >= SY(340) && y <= SY(388) && x >= SX(133) && x <= SX(333)) { applyClock(); return; }
+  if (y >= SY(340) && y <= SY(388) && x >= SX(133) && x <= SX(333)) {
+    applyClock();
+    sfxPlay(SFX_TAP);
+    return;
+  }
 }
 
 // flame + streak number at top-left
@@ -1566,13 +1583,15 @@ void keyboardTap(int16_t x, int16_t y) {
   int i = row * KB_COLS + col;
   if (i >= 30) return;
   if (i == 28) {  // backspace
-    if (nameLen) nameBuf[--nameLen] = 0;
+    if (nameLen) { nameBuf[--nameLen] = 0; sfxPlay(SFX_BACK); }
   } else if (i == 29) {  // OK
     pet.rename(nameBuf);
     kbOpen = false;
+    sfxPlay(SFX_TAP);
   } else if (nameLen < sizeof(nameBuf) - 1) {
     nameBuf[nameLen++] = KB_KEYS[i];
     nameBuf[nameLen] = 0;
+    sfxPlay(SFX_TAP);
   }
 }
 
@@ -1672,11 +1691,13 @@ void galleryTap(int16_t x, int16_t y) {
     galleryDetail = 0;
     galleryPmd.unload();
     galleryDirty = true;
+    sfxPlay(SFX_BACK);
     return;
   }
   if (y < SY(72)) {  // tap the header = exit
     galleryOpen = false;
     galleryPmd.unload();
+    sfxPlay(SFX_BACK);
     return;
   }
   int c = (x - GAL_X) / GAL_CELL, r = (y - GAL_Y) / GAL_CELL;
@@ -1685,6 +1706,7 @@ void galleryTap(int16_t x, int16_t y) {
   if (dex > 151) return;
   galleryDetail = dex;
   galleryPmd.load(dex, pet.isShinyRegistered(dex));
+  sfxPlay(SFX_TAP);
 }
 
 void drawBattery() {
