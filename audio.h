@@ -17,6 +17,7 @@ enum Sfx : uint8_t {
   SFX_LEVEL,    // level up
   SFX_SWIPE,    // page / open
   SFX_BACK,     // close / back
+  SFX_BOOT,     // power-on greeting (not the hatch chirp)
   SFX_COUNT
 };
 

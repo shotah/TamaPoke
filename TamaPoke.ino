@@ -390,7 +390,7 @@ void handleSerial() {
     Serial.println("sick=1");
     Serial.println("DONE");
   } else if (line == "BEEP") {
-    sfxPlay(SFX_HATCH);  // audio test
+    sfxPlay(SFX_BOOT);  // audio test (boot jingle)
     Serial.println("DONE");
   } else if (line == "ABANDON") {
     pet.dbgRunawayReady();  // force the "ready to run away" state (button test)

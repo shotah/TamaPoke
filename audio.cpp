@@ -47,12 +47,15 @@ static const Note N_BYE[]    = {{784, 150}, {659, 150}, {523, 280}};
 static const Note N_LEVEL[]  = {{784, 70}, {1047, 130}};
 static const Note N_SWIPE[]  = {{330, 16, 2200}, {392, 18, 1800}};  // page flip
 static const Note N_BACK[]   = {{392, 14, 2000}, {294, 20, 1600}};  // close / back
+static const Note N_BOOT[]   = {  // spring wake: G — C — E
+  {392, 280, 2400}, {523, 240, 2200}, {659, 480, 1800}
+};
 
 struct SfxDef { const Note *n; uint8_t len; };
 static const SfxDef SFX[SFX_COUNT] = {
   {N_TAP, 2}, {N_EAT, 3}, {N_PLAY, 2}, {N_PUNCH, 2}, {N_HEART, 2}, {N_HATCH, 4},
   {N_EVOLVE, 5}, {N_MEDAL, 5}, {N_DENY, 2}, {N_BYE, 3}, {N_LEVEL, 2},
-  {N_SWIPE, 2}, {N_BACK, 2},
+  {N_SWIPE, 2}, {N_BACK, 2}, {N_BOOT, 3},
 };
 
 #if AUDIO_STEREO
@@ -142,7 +145,7 @@ void audioBegin() {
   gReady = true;
   gQ = xQueueCreate(16, sizeof(uint8_t));  // rapid punches enqueue faster than they play
   xTaskCreatePinnedToCore(audioTask, "audio", 4096, nullptr, 1, nullptr, 0);
-  sfxPlay(SFX_HATCH);
+  sfxPlay(SFX_BOOT);
 }
 
 void sfxPlay(uint8_t id) {
